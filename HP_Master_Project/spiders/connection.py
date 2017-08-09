@@ -6,6 +6,7 @@ import re
 from scrapy import Request
 import urlparse
 from HP_Master_Project.items import HpMasterProjectItem
+import urllib
 
 
 def extract_first(selector_list, default=None):
@@ -26,10 +27,13 @@ class ConnectionSpider(scrapy.Spider):
     name = "connection_products"
     allowed_domains = ['https://www.connection.com']
 
-    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term=hp'
+    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term={search_term}'
 
     def start_requests(self):
-        yield scrapy.Request(url=self.SEARCH_URL, callback=self.parse_links)
+        yield Request(
+            url=self.SEARCH_URL.format(search_term=urllib.quote_plus(self.searchterm.encode('utf-8'))),
+            callback=self.parse_links
+        )
 
     def parse_links(self, response):
         total_match = re.search('of (\d+) Results', response.body)
@@ -44,7 +48,7 @@ class ConnectionSpider(scrapy.Spider):
         for i in range(1, int(page_count) + 1):
             offset = '#{page_num}~Best+Matches~{result_per_page}~List'.format(page_num=i,
                                                                               result_per_page=result_per_page)
-            page_link = self.SEARCH_URL + offset
+            page_link = response.url + offset
             total_page_links.append(page_link)
 
         for total_page_link in total_page_links:
@@ -100,7 +104,8 @@ class ConnectionSpider(scrapy.Spider):
         product['sku'] = sku
 
         # Parse retailer_key
-        product['retailer_key'] = None
+        retailer_key = self._parse_retailer_key(response)
+        product['retailer_key'] = retailer_key
 
         # Parse in_store
         in_store = self._parse_instore(response)
@@ -153,11 +158,15 @@ class ConnectionSpider(scrapy.Spider):
     def _parse_price(response):
         price = extract_first(response.xpath('//span[@class="product-price"]'
                                              '/span[@class="priceDisplay"]/text()'))
-        return float(price.replace("$", ""))
+        return float(price.replace("$", "").replace(",", ""))
 
     def _parse_sku(self, response):
         sku = extract_first(response.xpath('//span[@itemprop="sku"]/text()'))
         return clean_text(self, sku)
+
+    def _parse_retailer_key(self, response):
+        retailer_key = extract_first(response.xpath('//span[@itemprop="sku"]/text()'))
+        return clean_text(self, retailer_key)
 
     def _parse_instore(self, response):
         if self._parse_price(response):
