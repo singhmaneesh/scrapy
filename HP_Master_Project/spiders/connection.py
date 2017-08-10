@@ -5,22 +5,10 @@ import scrapy
 import re
 from scrapy import Request
 import urlparse
-from HP_Master_Project.items import HpMasterProjectItem
+from HP_Master_Project.items import ConnectionItem
 import urllib
-
-
-def extract_first(selector_list, default=None):
-    for x in selector_list:
-        return x.extract()
-    else:
-        return default
-
-
-def clean_text(self, text):
-    text = text.replace("\n", " ").replace("\t", " ").replace("\r", " ")
-    text = re.sub("&nbsp;", " ", text).strip()
-
-    return re.sub(r'\s+', ' ', text)
+from HP_Master_Project.utils import extract_first, clean_text, clean_list
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class ConnectionSpider(scrapy.Spider):
@@ -55,18 +43,27 @@ class ConnectionSpider(scrapy.Spider):
             yield Request(url=total_page_link, callback=self.parse_link, dont_filter=True)
 
     def parse_link(self, response):
+        product_total_link = []
         product_links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
 
         for product_link in product_links:
             prod_link = urlparse.urljoin(response.url, product_link)
+            if prod_link in product_total_link:
+                return
+
+            product_total_link.append(prod_link)
             yield Request(url=prod_link, callback=self.parse_product, dont_filter=True)
 
     def parse_product(self, response):
-        product = HpMasterProjectItem()
+        product = ConnectionItem()
 
         # Parse name
         name = self._parse_name(response)
         product['name'] = name
+
+        # Parse brand
+        brand = self._parse_brand(response)
+        product['brand'] = brand
 
         # Parse image
         image = self._parse_image(response)
@@ -141,6 +138,13 @@ class ConnectionSpider(scrapy.Spider):
         name = extract_first(response.xpath('//h1[@class="pagetitle"]/text()'))
         return name
 
+    def _parse_brand(self, response):
+        brand = response.xpath('//span[@itemprop="brand"]/text()')
+        if brand:
+            return extract_first(brand)
+        return extract_brand_from_first_words(self._parse_name(response)) \
+            if self._parse_name(response) else None
+
     @staticmethod
     def _parse_image(response):
         image_url = extract_first(response.xpath('//a[@item-prop="image"]/@href'))
@@ -214,14 +218,30 @@ class ConnectionSpider(scrapy.Spider):
                                        '/li/div[contains(@id, "product_spec")]'
                                        '/*[@aria-label="%s"]'
                                        '//text()' % f_name).extract()
+            f_content = clean_list(self, f_content)
             if len(f_content) > 1:
-                f_content = " ".join(f_content)
-                f_content = clean_text(self, f_content)
-                f_content = [f_content]
+                f_content_title = response.xpath('//ul[@id="productSpecsContainer"]'
+                                                 '/li/div[contains(@id, "product_spec")]'
+                                                 '/*[@aria-label="%s"]'
+                                                 '//span[@class="strong"]/text()' % f_name).extract()
+                f_content_title = clean_list(self, f_content_title)
+
+                f_content_text = response.xpath('//ul[@id="productSpecsContainer"]'
+                                                '/li/div[contains(@id, "product_spec")]'
+                                                '/*[@aria-label="%s"]'
+                                                '//span[not(contains(@class,"strong"))]'
+                                                '/text()' % f_name).extract()
+                f_content_text = clean_list(self, f_content_text)
+
+                for f_c_title in f_content_title:
+                    index = f_content_title.index(f_c_title)
+                    feature = {f_c_title.replace(":", ""): f_content_text[index]}
+                    features.append(feature)
+
             else:
                 f_content = f_content[0]
                 f_content = clean_text(self, f_content)
+                feature = {f_name: f_content}
+                features.append(feature)
 
-            feature = (f_name, f_content)
-            features.append(feature)
         return features

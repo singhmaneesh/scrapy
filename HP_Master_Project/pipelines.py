@@ -26,13 +26,14 @@ class CSVPipeline(object):
         crawler.signals.connect(pipeline.spider_closed, signals.spider_closed)
 
     def spider_opened(self, spider):
-        result_file = open('crawler products.csv', 'w+b')
-        self.files[spider] = result_file
-        self.exporter = CsvItemExporter(result_file)
-        self.exporter.fields_to_export = ['name', 'image', 'link', 'model', 'upc', 'ean', 'currencycode',
-                                          'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
-                                          'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
-                                          'gallery', 'features', 'condition']
+        if spider.name == 'connection_products':
+            result_connection = open('crawler connection.csv', 'w+b')
+            self.files[spider] = result_connection
+            self.exporter = CsvItemExporter(result_connection)
+            self.exporter.fields_to_export = ['name', 'brand', 'image', 'link', 'model', 'upc', 'ean', 'currencycode',
+                                              'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
+                                              'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
+                                              'gallery', 'features', 'condition']
         self.exporter.start_exporting()
 
     def spider_closed(self, spider):
