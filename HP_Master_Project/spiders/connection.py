@@ -17,6 +17,8 @@ class ConnectionSpider(scrapy.Spider):
 
     SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term={search_term}'
 
+    link = []
+
     def start_requests(self):
         yield Request(
             url=self.SEARCH_URL.format(search_term=urllib.quote_plus(self.searchterm.encode('utf-8'))),
@@ -43,19 +45,19 @@ class ConnectionSpider(scrapy.Spider):
             yield Request(url=total_page_link, callback=self.parse_link, dont_filter=True)
 
     def parse_link(self, response):
-        product_total_link = []
         product_links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
 
-        for product_link in product_links:
+        for product_link in list(set(product_links)):
             prod_link = urlparse.urljoin(response.url, product_link)
-            if prod_link in product_total_link:
-                return
-
-            product_total_link.append(prod_link)
             yield Request(url=prod_link, callback=self.parse_product, dont_filter=True)
 
     def parse_product(self, response):
         product = ProductItem()
+
+        if response.url in self.link:
+            return
+
+        self.link.append(response.url)
 
         # Parse name
         name = self._parse_name(response)
