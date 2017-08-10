@@ -8,29 +8,31 @@
 import scrapy
 
 
-class ConnectionItem(scrapy.Item):
+class ProductItem(scrapy.Item):
     # define the fields for your item here like:
-    name = scrapy.Field()
-    brand = scrapy.Field()
-    image = scrapy.Field()
-    link = scrapy.Field()
-    model = scrapy.Field()
-    upc = scrapy.Field()
-    ean = scrapy.Field()
-    currencycode = scrapy.Field()
-    locale = scrapy.Field()
-    price = scrapy.Field()
-    saleprice = scrapy.Field()
-    sku = scrapy.Field()
-    retailer_key = scrapy.Field()
-    instore = scrapy.Field()
-    shiptostore = scrapy.Field()
-    shippingphrase = scrapy.Field()
-    productstockstatus = scrapy.Field()
-    categories = scrapy.Field()
-    gallery = scrapy.Field()
-    features = scrapy.Field()
-    condition = scrapy.Field()
+    name = scrapy.Field()   # String
+    brand = scrapy.Field()  # String
+    image = scrapy.Field()  # String
+    link = scrapy.Field()   # String
+    model = scrapy.Field()  # String, Alphanumeric code
+    upc = scrapy.Field()    # Integer, 12 digit code
+    ean = scrapy.Field()    # Integer, 13 digit International Article Number
+    currencycode = scrapy.Field()   # String
+    locale = scrapy.Field()     # String
+    price = scrapy.Field()  # Float
+    saleprice = scrapy.Field()  # Float
+    sku = scrapy.Field()    # String
+    retailer_key = scrapy.Field()   # String
+    instore = scrapy.Field()    # Integer (available for purchase in-store: 1, unavailable: 0)
+    shiptostore = scrapy.Field()    # Integer
+    shippingphrase = scrapy.Field()     # String
+    productstockstatus = scrapy.Field()     # Integer (outOfStock=0, inStock=1, call for availability=2, Discontinued=3,Other=4)
+    categories = scrapy.Field()     # String
+    gallery = scrapy.Field()    # String
+    features = scrapy.Field()   # String
+    condition = scrapy.Field()  # Integer (New=1, Refurbished=2, Used=3, Damaged=4)
+    publisher = scrapy.Field()  # String
+    manufacturer = scrapy.Field()   # String
 
 
 

@@ -5,7 +5,7 @@ import scrapy
 import re
 from scrapy import Request
 import urlparse
-from HP_Master_Project.items import ConnectionItem
+from HP_Master_Project.items import ProductItem
 import urllib
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.extract_brand import extract_brand_from_first_words
@@ -55,7 +55,7 @@ class ConnectionSpider(scrapy.Spider):
             yield Request(url=prod_link, callback=self.parse_product, dont_filter=True)
 
     def parse_product(self, response):
-        product = ConnectionItem()
+        product = ProductItem()
 
         # Parse name
         name = self._parse_name(response)
