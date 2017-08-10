@@ -8,7 +8,6 @@ import urlparse
 from HP_Master_Project.items import ProductItem
 import urllib
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
-from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class ConnectionSpider(scrapy.Spider):
@@ -144,8 +143,7 @@ class ConnectionSpider(scrapy.Spider):
         brand = response.xpath('//span[@itemprop="brand"]/text()')
         if brand:
             return extract_first(brand)
-        return extract_brand_from_first_words(self._parse_name(response)) \
-            if self._parse_name(response) else None
+        return self.searchterm.upper()
 
     @staticmethod
     def _parse_image(response):
