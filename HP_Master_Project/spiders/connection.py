@@ -5,9 +5,10 @@ import scrapy
 import re
 from scrapy import Request
 import urlparse
-from HP_Master_Project.items import ProductItem
+
 import urllib
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
+from HP_Master_Project.items import ProductItem
 
 
 class ConnectionSpider(scrapy.Spider):
@@ -15,6 +16,10 @@ class ConnectionSpider(scrapy.Spider):
     allowed_domains = ['https://www.connection.com']
 
     SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term={search_term}'
+
+    Paginate_URL = 'https://www.connection.com/product/searchpage?SearchType=1&term={search_term}' \
+                   '&pageNumber={page_num}&pageSize={result_per_page}&' \
+                   'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'
 
     link = []
 
@@ -35,9 +40,8 @@ class ConnectionSpider(scrapy.Spider):
 
         total_page_links = []
         for i in range(1, int(page_count) + 1):
-            offset = '#{page_num}~Best+Matches~{result_per_page}~List'.format(page_num=i,
-                                                                              result_per_page=result_per_page)
-            page_link = response.url + offset
+            page_link = self.Paginate_URL.format(search_term=urllib.quote_plus(self.searchterm.encode('utf-8'))
+                                                 ,page_num=i, result_per_page=result_per_page)
             total_page_links.append(page_link)
 
         for total_page_link in total_page_links:
@@ -48,13 +52,13 @@ class ConnectionSpider(scrapy.Spider):
 
         for product_link in list(set(product_links)):
             prod_link = urlparse.urljoin(response.url, product_link)
+            if prod_link in self.link:
+                return
+            self.link.append(prod_link)
             yield Request(url=prod_link, callback=self.parse_product, dont_filter=True)
 
     def parse_product(self, response):
         product = ProductItem()
-
-        if response.url in self.link:
-            return
 
         self.link.append(response.url)
 
