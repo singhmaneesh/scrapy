@@ -215,13 +215,17 @@ class StaplesSpider(BaseProductsSpider):
             return self.clear_text(model[0])
 
     def _parse_upc(self, response):
-        js_data = self.parse_js_data(response)
-        upc = js_data['metadata']['upc_code']
-        upc = upc[-12:]
-        if len(upc) < 12:
-            count = 12-len(upc)
-            upc = '0'*count + upc
-        return upc
+        try:
+            js_data = self.parse_js_data(response)
+            upc = js_data['metadata']['upc_code']
+            upc = upc[-12:]
+            if len(upc) < 12:
+                count = 12-len(upc)
+                upc = '0'*count + upc
+            return upc
+        except Exception as e:
+            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
+            return None
 
     @staticmethod
     def _parse_gallery(response):
@@ -259,33 +263,45 @@ class StaplesSpider(BaseProductsSpider):
         return 0
 
     def _parse_manufacturer(self, response):
-        js_data = self.parse_js_data(response)
-        manufacturer = js_data['metadata']['mfname']
-        return manufacturer
+        try:
+            js_data = self.parse_js_data(response)
+            manufacturer = js_data['metadata']['mfname']
+            return manufacturer
+        except Exception as e:
+            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
+            return None
 
     def _parse_shiptostore(self, response):
-        js_data = self.parse_js_data(response)
-        shiptostore = js_data['metadata']['ship_to_store_flag']
-        return shiptostore
+        try:
+            js_data = self.parse_js_data(response)
+            shiptostore = js_data['metadata']['ship_to_store_flag']
+            return shiptostore
+        except Exception as e:
+            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
+            return None
 
     @staticmethod
     def _parse_shippingphrase(response):
         return None
 
     def _parse_features(self, response):
-        feature_list = []
-        js_data = self.parse_js_data(response)
-        features = js_data['description']['bullets']
-        for feat in features:
-            feature = feat['value']
-            if ':' in feature:
-                feature_title = feature.split(':')[0]
-                feature_content = clean_text(self, feature.split(':')[1])
-                feature = {feature_title: feature_content}
-                feature_list.append(feature)
-            else:
-                break
-        return feature_list
+        try:
+            feature_list = []
+            js_data = self.parse_js_data(response)
+            features = js_data['description']['bullets']
+            for feat in features:
+                feature = feat['value']
+                if ':' in feature:
+                    feature_title = feature.split(':')[0]
+                    feature_content = clean_text(self, feature.split(':')[1])
+                    feature = {feature_title: feature_content}
+                    feature_list.append(feature)
+                else:
+                    break
+            return feature_list
+        except Exception as e:
+            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
+            return None
 
     def clear_text(self, str_result):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()

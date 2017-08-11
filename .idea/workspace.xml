@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="37e11322-5630-4182-82b5-cad5854914ca" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" />
     </list>
     <ignored path="HP_Master_Project.iws" />
@@ -36,11 +35,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="staples.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="staples.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="252">
-              <caret line="262" column="52" selection-start-line="262" selection-start-column="52" selection-end-line="262" selection-end-column="52" />
+              <caret line="303" column="23" selection-start-line="303" selection-start-column="23" selection-end-line="303" selection-end-column="23" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
@@ -58,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="432">
-              <caret line="392" column="62" selection-start-line="392" selection-start-column="62" selection-end-line="392" selection-end-column="62" />
+            <state relative-caret-position="2592">
+              <caret line="392" column="51" selection-start-line="392" selection-start-column="51" selection-end-line="392" selection-end-column="51" />
               <folding>
                 <element signature="e#0#66#0" expanded="true" />
               </folding>
@@ -122,8 +121,8 @@
         <option value="$PROJECT_DIR$/HP_Master_Project/pipelines.py" />
         <option value="$PROJECT_DIR$/HP_Master_Project/spiders/connection.py" />
         <option value="$PROJECT_DIR$/HP_Master_Project/items.py" />
-        <option value="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" />
         <option value="$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py" />
+        <option value="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" />
       </list>
     </option>
   </component>
@@ -437,7 +436,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5152151" sideWeight="0.49785933" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.027282266" sideWeight="0.49785933" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2518363" sideWeight="0.49785933" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.46904513" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -708,22 +707,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="262" column="52" selection-start-line="262" selection-start-column="52" selection-end-line="262" selection-end-column="52" />
+        <state relative-caret-position="2592">
+          <caret line="392" column="51" selection-start-line="392" selection-start-column="51" selection-end-line="392" selection-end-column="51" />
           <folding>
-            <element signature="e#27#93#0" expanded="true" />
+            <element signature="e#0#66#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py">
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="432">
-          <caret line="392" column="62" selection-start-line="392" selection-start-column="62" selection-end-line="392" selection-end-column="62" />
+        <state relative-caret-position="252">
+          <caret line="303" column="23" selection-start-line="303" selection-start-column="23" selection-end-line="303" selection-end-column="23" />
           <folding>
-            <element signature="e#0#66#0" expanded="true" />
+            <element signature="e#27#93#0" expanded="true" />
           </folding>
         </state>
       </provider>
