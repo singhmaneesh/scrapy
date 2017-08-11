@@ -5,11 +5,11 @@ from scrapy import Request
 from scrapy.log import WARNING
 import urlparse
 import json
-import json
 import re
 import time
 import traceback
 
+from HP_Master_Project.utils import clean_text, clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
 
@@ -119,6 +119,14 @@ class StaplesSpider(BaseProductsSpider):
         sku = self._parse_sku(response)
         product['sku'] = sku
 
+        # Parse manufacturer
+        manufacturer = self._parse_manufacturer(response)
+        product['manufacturer'] = manufacturer
+
+        # Parse categories
+        categories = self._parse_categories(response)
+        product['categories'] = categories
+
         # Parse sale price
         # product['saleprice'] = price
 
@@ -137,10 +145,6 @@ class StaplesSpider(BaseProductsSpider):
         # Parse shipping phrase
         shipping_phrase = self._parse_shippingphrase(response)
         product['shippingphrase'] = shipping_phrase
-
-        # Parse stock status
-        stock_status = self._parse_stock_status(response)
-        product['productstockstatus'] = stock_status
 
         # Parse gallery
         product['gallery'] = self._parse_gallery(response)
@@ -200,14 +204,29 @@ class StaplesSpider(BaseProductsSpider):
         if sku:
             return self.clear_text(sku[0])
 
+    @staticmethod
+    def _parse_categories(response):
+        categories = response.xpath('//li[contains(@typeof, "Breadcrumb")]/a/text()').extract()
+        return categories
+
     def _parse_model(self, response):
         model = response.xpath('//span[contains(@ng-bind, "product.metadata.mfpartnumber")]/text()').extract()
         if model:
             return self.clear_text(model[0])
 
+    def _parse_upc(self, response):
+        js_data = self.parse_js_data(response)
+        upc = js_data['metadata']['upc_code']
+        upc = upc[-12:]
+        if len(upc) < 12:
+            count = 12-len(upc)
+            upc = '0'*count + upc
+        return upc
+
     @staticmethod
-    def _parse_upc(response):
-        return None
+    def _parse_gallery(response):
+        gallery = response.xpath('//div[@class="thumbs-wrapper"]/ul[@ng-hide="showThumbnails"]/li/img/@src').extract()
+        return gallery
 
     def _parse_price(self, response):
         meta = response.meta.copy()
@@ -215,9 +234,9 @@ class StaplesSpider(BaseProductsSpider):
         try:
             jsonresponse = json.loads(response.body_as_unicode())
             if u'currentlyOutOfStock' in jsonresponse['cartAction']:
-                product['productstockstatus'] = True
+                product['productstockstatus'] = 0
             else:
-                product['productstockstatus'] = False
+                product['productstockstatus'] = 1
 
             product['price'] = jsonresponse['pricing']['finalPrice']
             return product
@@ -228,29 +247,45 @@ class StaplesSpider(BaseProductsSpider):
                 self.log("Repeating base product data request: {}".format(e), WARNING)
                 return Request(response.url, callback=self._parse_price, meta=meta, dont_filter=True)
 
-    @staticmethod
-    def _parse_retailer_key(response):
-        return None
+    def _parse_retailer_key(self, response):
+        retailer_key = response.xpath('//span[contains(@itemprop, "sku")]/text()').extract()
+        if retailer_key:
+            return self.clear_text(retailer_key[0])
 
-    @staticmethod
-    def _parse_instore(response):
-        return None
+    def _parse_instore(self, response):
+        if self._parse_price(response):
+            return 1
 
-    @staticmethod
-    def _parse_shiptostore(response):
-        return None
+        return 0
 
-    @staticmethod
-    def _parse_stock_status(response):
-        return None
+    def _parse_manufacturer(self, response):
+        js_data = self.parse_js_data(response)
+        manufacturer = js_data['metadata']['mfname']
+        return manufacturer
+
+    def _parse_shiptostore(self, response):
+        js_data = self.parse_js_data(response)
+        shiptostore = js_data['metadata']['ship_to_store_flag']
+        return shiptostore
 
     @staticmethod
     def _parse_shippingphrase(response):
         return None
 
-    @staticmethod
-    def _parse_features(response):
-        return None
+    def _parse_features(self, response):
+        feature_list = []
+        js_data = self.parse_js_data(response)
+        features = js_data['description']['bullets']
+        for feat in features:
+            feature = feat['value']
+            if ':' in feature:
+                feature_title = feature.split(':')[0]
+                feature_content = clean_text(self, feature.split(':')[1])
+                feature = {feature_title: feature_content}
+                feature_list.append(feature)
+            else:
+                break
+        return feature_list
 
     def clear_text(self, str_result):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()

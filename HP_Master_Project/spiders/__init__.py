@@ -393,12 +393,12 @@ class BaseProductsSpider(Spider):
                 # The product is complete, no need for another request.
                 yield prod_item
             elif isinstance(prod_url, Request):
-                cond_set_value(prod_item, 'url', prod_url.url)  # Tentative.
+                cond_set_value(prod_item, 'link', prod_url.url)  # Tentative.
                 yield prod_url
             else:
                 # Another request is necessary to complete the product.
                 url = urlparse.urljoin(response.url, prod_url)
-                cond_set_value(prod_item, 'url', url)  # Tentative.
+                cond_set_value(prod_item, 'link', url)  # Tentative.
                 yield Request(
                     url,
                     callback=self.parse_product,
