@@ -39,8 +39,6 @@ class StaplesSpider(BaseProductsSpider):
                 '&channel_availability_for_id={metadata__channel_availability_for__id}' \
                 '&backOrderFlag={metadata__backorder_flag}'
 
-    is_category = False
-
     def __init__(self, *args, **kwargs):
         self.is_category = False
         super(StaplesSpider, self).__init__(

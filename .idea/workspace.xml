@@ -38,8 +38,8 @@
       <file leaf-file-name="staples.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="303" column="23" selection-start-line="303" selection-start-column="23" selection-end-line="303" selection-end-column="23" />
+            <state relative-caret-position="335">
+              <caret line="52" column="25" selection-start-line="52" selection-start-column="25" selection-end-line="52" selection-end-column="25" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
@@ -434,9 +434,9 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.26757607" sideWeight="0.5021407" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5152151" sideWeight="0.49785933" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3903463" sideWeight="0.49785933" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2518363" sideWeight="0.49785933" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.20881426" sideWeight="0.49785933" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.46904513" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -461,13 +461,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py</url>
-          <line>162</line>
-          <option name="timeStamp" value="80" />
-        </line-breakpoint>
-      </breakpoints>
       <option name="time" value="87" />
     </breakpoint-manager>
     <watches-manager>
@@ -719,8 +712,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="303" column="23" selection-start-line="303" selection-start-column="23" selection-end-line="303" selection-end-column="23" />
+        <state relative-caret-position="335">
+          <caret line="52" column="25" selection-start-line="52" selection-start-column="25" selection-end-line="52" selection-end-column="25" />
           <folding>
             <element signature="e#27#93#0" expanded="true" />
           </folding>
