@@ -10,6 +10,14 @@ import scrapy
 
 class ProductItem(scrapy.Item):
     # define the fields for your item here like:
+    site = scrapy.Field()
+    search_term = scrapy.Field()
+    ranking = scrapy.Field()
+    total_matches = scrapy.Field()
+    results_per_page = scrapy.Field()
+    scraped_results_per_page = scrapy.Field()
+    is_single_result = scrapy.Field()
+
     name = scrapy.Field()   # String
     brand = scrapy.Field()  # String
     image = scrapy.Field()  # String
