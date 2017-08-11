@@ -166,7 +166,8 @@ class ConnectionSpider(scrapy.Spider):
     def _parse_price(response):
         price = extract_first(response.xpath('//span[@class="product-price"]'
                                              '/span[@class="priceDisplay"]/text()'))
-        return float(price.replace("$", "").replace(",", ""))
+        if price:
+            return float(price.replace("$", "").replace(",", ""))
 
     def _parse_sku(self, response):
         sku = extract_first(response.xpath('//span[@itemprop="sku"]/text()'))
