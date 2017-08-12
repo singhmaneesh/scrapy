@@ -125,9 +125,6 @@ class StaplesSpider(BaseProductsSpider):
         categories = self._parse_categories(response)
         product['categories'] = categories
 
-        # Parse sale price
-        # product['saleprice'] = price
-
         # Parse retailer_key
         retailer_key = self._parse_retailer_key(response)
         product['retailer_key'] = retailer_key
@@ -240,7 +237,8 @@ class StaplesSpider(BaseProductsSpider):
             else:
                 product['productstockstatus'] = 1
 
-            product['price'] = jsonresponse['pricing']['finalPrice']
+            product['price'] = jsonresponse['pricing']['nowPrice']
+            product['saleprice'] = jsonresponse['pricing']['finalPrice']
             return product
 
         except BaseException as e:
