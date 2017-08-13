@@ -43,6 +43,16 @@ class CSVPipeline(object):
                                               'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
                                               'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
                                               'gallery', 'features', 'condition']
+
+        if spider.name == 'zones_products':
+            result_zones = open('crawler zones.csv', 'w+b')
+            self.files[spider] = result_zones
+            self.exporter = CsvItemExporter(result_zones)
+            self.exporter.fields_to_export = ['name', 'brand', 'image', 'link', 'model', 'upc', 'ean', 'currencycode',
+                                              'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
+                                              'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
+                                              'gallery', 'features', 'condition']
+
         self.exporter.start_exporting()
 
     def spider_closed(self, spider):
