@@ -1,7 +1,7 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-from scrapy import Request
+from scrapy import Request, FormRequest
 from scrapy.log import WARNING
 import re
 import time
@@ -45,13 +45,13 @@ class ZonesSpider(BaseProductsSpider):
     def parse_search(self, response):
         page_not_found = re.search("Page Not Found", response.body)
         if page_not_found:
-            yield Request(url=self.OTHER_SEARCH_URL.format(search_term=response.meta['search_term']),
-                          meta=response.meta)
+            return Request(url=self.OTHER_SEARCH_URL.format(search_term=response.meta['search_term']),
+                           meta=response.meta)
 
         else:
             category_url = response.xpath('//div[@class="solutions-learn-more"]/a/@href').extract()
             for c_url in category_url:
-                yield Request(url=c_url, meta=response.meta, callback=self.parse_category_link)
+                return Request(url=c_url, meta=response.meta, callback=self.parse_category_link)
 
     @staticmethod
     def parse_category_link(response):
@@ -135,23 +135,21 @@ class ZonesSpider(BaseProductsSpider):
         # Parse condition
         product['condition'] = 1
 
-        product['productstockstatus'] = 1
-
-        # product_id = response.xpath('//input[@id="product_id"]/@value').extract()
-        # if product_id:
-        #     current_time = int(round(time.time() * 1000))
-        #     page_name = response.xpath('//input[@name="page_name"]/@value').extract()
-        #     return Request(
-        #         url=self.STOCK_STATUS_URL.format(prod_id=product_id[0],
-        #                                          time=current_time),
-        #         callback=self._parse_stock_status,
-        #         dont_filter=True,
-        #         meta={"product": product},
-        #         headers={"Referer": "http://www.zones.com/site/product/index.html?"
-        #                             "id={id}&page_name={p_name}".format(id=product_id[0], p_name=page_name[0]),
-        #                  'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
-        #                                'Chrome/60.0.3112.90 Safari/537.36'}
-        #     )
+        product_id = response.xpath('//input[@id="product_id"]/@value').extract()
+        if product_id:
+            current_time = int(round(time.time() * 1000))
+            page_name = response.xpath('//input[@name="page_name"]/@value').extract()
+            return Request(
+                url=self.STOCK_STATUS_URL.format(prod_id=product_id[0],
+                                                 time=current_time),
+                callback=self._parse_stock_status,
+                dont_filter=True,
+                meta={"product": product},
+                headers={"Referer": "http://www.zones.com/site/product/index.html?"
+                                    "id={id}&page_name={p_name}".format(id=product_id[0], p_name=page_name[0]),
+                         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                                       'Chrome/60.0.3112.90 Safari/537.36'}
+            )
 
         return product
 
@@ -260,13 +258,14 @@ class ZonesSpider(BaseProductsSpider):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()
 
     def _scrape_total_matches(self, response):
-        totals = response.xpath('//input[contains(@id, "allProductsTabCount")]/@value').extract()
+        totals = response.xpath('//div[@class="serp-item-count"]').extract()
         if totals:
-            totals = totals[0].replace(',', '').replace('.', '').strip()
-            if totals.isdigit():
-                if not self.TOTAL_MATCHES:
-                    self.TOTAL_MATCHES = int(totals)
-                return int(totals)
+            totals = totals[0]
+            totals = re.search("of <strong>(.*)</strong>", totals)
+            if totals:
+                totals = totals.group(1).replace(',', '').replace('.', '').strip()
+                if totals.isdigit():
+                    return int(totals)
 
     def _scrape_product_links(self, response):
         links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
@@ -276,4 +275,27 @@ class ZonesSpider(BaseProductsSpider):
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        return None
+        meta = response.meta
+        current_page = meta.get('current_page')
+        if not current_page:
+            current_page = 1
+
+        if current_page * response.meta['scraped_results_per_page'] >= response.meta['total_matches']:
+            return
+        current_page += 1
+        meta['current_page'] = current_page
+
+        return FormRequest(
+            url=self.PAGINATE_URL,
+            formdata={
+              "searchType": "browse_search",
+              "submit_name": "select_compare_form",
+              "page_number": str(current_page),
+              "partner_id": "",
+              "compareChecks": "",
+              "compare_maxed": ""
+            },
+            dont_filter=True,
+            headers=self.HEADERS,
+            meta=meta
+        )
