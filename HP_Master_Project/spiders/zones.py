@@ -7,7 +7,7 @@ import re
 import time
 from scrapy.conf import settings
 
-from HP_Master_Project.utils import extract_first, clean_text, clean_list
+from HP_Master_Project.utils import clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
 
@@ -16,9 +16,7 @@ class ZonesSpider(BaseProductsSpider):
     name = 'zones_products'
     allowed_domains = ['zones.com', "www.zones.com"]
 
-    SEARCH_URL = "http://www.zones.com/site/statics/static_page.html?name=partner/{search_term}/index"
-
-    OTHER_SEARCH_URL = "http://www.zones.com/site/locate/search.html?txt_search={search_term}"
+    SEARCH_URL = "http://www.zones.com/site/locate/search.html?txt_search={search_term}"
 
     PAGINATE_URL = "http://www.zones.com/site/locate/refine.html?&preserve=true"
 
@@ -39,14 +37,13 @@ class ZonesSpider(BaseProductsSpider):
     def start_requests(self):
         for request in super(ZonesSpider, self).start_requests():
             if not self.product_url:
-                request = request.replace(callback=self.parse_search)
+                request = request.replace(callback=self.parse_search, headers=self.HEADERS)
             yield request
 
     def parse_search(self, response):
-        page_not_found = re.search("Page Not Found", response.body)
-        if page_not_found:
-            return Request(url=self.OTHER_SEARCH_URL.format(search_term=response.meta['search_term']),
-                           meta=response.meta)
+        page_title = response.xpath('//div[@class="page-title"]').extract()
+        if page_title:
+            return self.parse(response)
 
         else:
             category_url = response.xpath('//div[@class="solutions-learn-more"]/a/@href').extract()
@@ -57,7 +54,7 @@ class ZonesSpider(BaseProductsSpider):
     def parse_category_link(response):
         link = response.xpath('//a[@class="learn-more-link"]/@href').extract()
         if link:
-            return Request(url=link[0], meta=response.meta, dont_filter=True)
+            yield Request(url=link[0], meta=response.meta, dont_filter=True)
 
     def _parse_single_product(self, response):
         return self.parse_product(response)

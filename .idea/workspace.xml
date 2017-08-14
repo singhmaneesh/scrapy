@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="37e11322-5630-4182-82b5-cad5854914ca" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/zones.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/zones.py" />
     </list>
     <ignored path="HP_Master_Project.iws" />
@@ -26,8 +27,8 @@
       <file leaf-file-name="zones.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/zones.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="407">
-              <caret line="138" column="22" selection-start-line="138" selection-start-column="22" selection-end-line="138" selection-end-column="22" />
+            <state relative-caret-position="540">
+              <caret line="30" column="42" selection-start-line="30" selection-start-column="42" selection-end-line="30" selection-end-column="42" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
@@ -38,8 +39,8 @@
       <file leaf-file-name="staples.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="568">
-              <caret line="356" column="36" selection-start-line="356" selection-start-column="36" selection-end-line="356" selection-end-column="36" />
+            <state relative-caret-position="414">
+              <caret line="65" column="19" selection-start-line="65" selection-start-column="19" selection-end-line="65" selection-end-column="39" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
@@ -389,7 +390,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="HP_Master_Project" />
       <option name="SCRIPT_NAME" value="/usr/local/lib/python2.7/dist-packages/Scrapy-1.3.3-py2.7.egg/scrapy/cmdline.py" />
-      <option name="PARAMETERS" value="crawl zones_products -a searchterms_str=&quot;hp&quot;" />
+      <option name="PARAMETERS" value="crawl zones_products -a searchterms_str=&quot;bag&quot;" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
@@ -424,11 +425,11 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.26757607" sideWeight="0.5021407" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.47114375" sideWeight="0.49785933" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.40503672" sideWeight="0.49785933" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21720882" sideWeight="0.49785933" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2633788" sideWeight="0.49785933" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.48268625" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4627492" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -458,12 +459,12 @@
           <option name="timeStamp" value="87" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="121" />
+      <option name="time" value="127" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
-        <watch expression="current_page * response.meta['scraped_results_per_page']" language="Python" />
-        <watch expression="response.meta['total_matches']" language="Python" />
+        <watch expression="re.search(&quot;Page Not Found&quot;, response.body)" language="Python" />
+        <watch expression="response.url" language="Python" />
       </configuration>
     </watches-manager>
   </component>
@@ -716,16 +717,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="568">
-          <caret line="356" column="36" selection-start-line="356" selection-start-column="36" selection-end-line="356" selection-end-column="36" />
-          <folding>
-            <element signature="e#27#93#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="333">
@@ -736,10 +727,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="414">
+          <caret line="65" column="19" selection-start-line="65" selection-start-column="19" selection-end-line="65" selection-end-column="39" />
+          <folding>
+            <element signature="e#27#93#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/zones.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="407">
-          <caret line="138" column="22" selection-start-line="138" selection-start-column="22" selection-end-line="138" selection-end-column="22" />
+        <state relative-caret-position="540">
+          <caret line="30" column="42" selection-start-line="30" selection-start-column="42" selection-end-line="30" selection-end-column="42" />
           <folding>
             <element signature="e#27#93#0" expanded="true" />
           </folding>
