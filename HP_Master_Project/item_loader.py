@@ -7,7 +7,7 @@ import re
 __all__ = ['ProductItemLoader']
 
 clean_text = Compose(MapCompose(lambda v: v.strip()), Join(';'))   
-features_out  = Compose(MapCompose(lambda v: v.strip()), Join('\n'))
+# features_out  = Compose(MapCompose(lambda v: v.strip()), Join('\n'))
 price_out  = Compose(MapCompose(lambda v: re.sub(r'[^\d\.]', '', v)), TakeFirst(), float)
 to_int = Compose(TakeFirst(), int)
 
@@ -43,7 +43,7 @@ def instore_out(field, values):
         v = values[0].lower()
         if 'instock' in v:
             return 1
-    return 0
+    return None
 
 class ProductItemLoader(ItemLoader):
     default_item_class = ProductItem
@@ -66,7 +66,7 @@ class ProductItemLoader(ItemLoader):
     productstockstatus_out = productstockstatus_out     # Integer (outOfStock=0, inStock=1, call for availability=2, Discontinued=3,Other=4)
     categories_out = clean_text
     gallery_out = Join(';')
-    features_out = features_out
+    # features_out = features_out
     condition_out = condition_out
     publisher_out = TakeFirst()
     manufacturer_out = TakeFirst()

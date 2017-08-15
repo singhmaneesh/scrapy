@@ -9,10 +9,19 @@ class HPSpider(SitemapSpider):
         ('/us/en/pdp/', 'parse_product'),
     ]
 
+    def _extract_features(self, response):
+        features = {}
+        for div in response.css('div#specs div.large-12'):
+            key = div.css('div.desc h2::text').extract_first()
+            val = div.css('p.specsDescription span::text').extract_first()
+            if key != None and val != None:
+                features[key.strip()] = val.strip()
+        return features
+
     def parse_product(self, response):
         l = ProductItemLoader(item=ProductItem(), response=response)
         l.add_css('name', 'h1.prodTitle > span::text')
-        l.add_css('brand', 'div[itemprop="brand"]::text')
+        l.add_value('brand', 'HP')
         l.add_css('image', 'img[itemprop="image"]::attr(src)')
         l.add_value('link', response.url)
         # l.add_css('model', '')
@@ -26,14 +35,17 @@ class HPSpider(SitemapSpider):
         l.add_css('retailer_key', 'span[itemprop="sku"]::text')
         l.add_css('instore', 'link[itemprop="availability"]::attr(href)')
         # l.add_css('shiptostore', '')
-        # l.add_css('shippingphrase', '')
+        l.add_css('shippingphrase', 'div.estShipMessagePDP::text')
         l.add_css('productstockstatus', 'link[itemprop="availability"]::attr(href)')
-        l.add_css('categories', 'section.heroProducts  ul.breadcrumbs2 > li:nth-child(n+2):nth-last-child(n+2) > a::text')
+        l.add_css('categories', 'input[var="category"]::attr(value)')
         l.add_css('gallery', 'img[itemprop="image"]::attr(src)')
-        l.add_css('features', '#features h2::text, #features p::text')
+        
+        features = self._extract_features(response)
+        l.add_value('features', features)
         l.add_css('condition', 'link[itemprop="itemCondition"]::attr(href)')
         # l.add_css('publisher', '')
-        # l.add_css('manufacturer', '')
+        l.add_value('manufacturer', features.get('Manufacturer', None))
+        l.add_value('mpn', features.get('Manufacturer Part Number', None))
         item = l.load_item()
         if item['saleprice'] == item['price']:
             item['saleprice'] = None
