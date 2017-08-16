@@ -41,3 +41,5 @@ zope.interface==4.4.2
 boto
 pyvirtualdisplay
 selenium
+xvfb
+xvfbwrapper
