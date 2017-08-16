@@ -45,80 +45,80 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         self.user_agent = ('Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36'
                            ' (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36')
         socket.setdefaulttimeout(60)
-        self._get_selenium_cookies_for_main_page()
+        # self._get_selenium_cookies_for_main_page()
         if kwargs.get('scrape_variants_with_extra_requests'):
             self._extra_requests = True
         super(OfficedepotProductsSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
 
-    def _prepare_driver(self, driver):
-        driver.set_page_load_timeout(int(self.timeout))
-        driver.set_script_timeout(int(self.timeout))
-        driver.set_window_size(int(self.width), int(self.height))
-
-    def _get_selenium_cookies_for_main_page(self):
-        from pyvirtualdisplay import Display
-        display = Display(visible=False)
-        display.start()
-        driver = self._init_chromium()
-        self._prepare_driver(driver)
-        try:
-            driver.get('http://' + self.allowed_domains[0])
-            time.sleep(10)
-            for cookie in driver.get_cookies():
-                self.selenium_cookies[cookie['name']] = cookie['value']
-            driver.quit()
-        except Exception as e:
-            driver.quit()
-            time.sleep(10)
-            self.log('Error getting cookies from homepage, trying one more time: %s' % str(e))
-            driver.get('http://' + self.allowed_domains[0])
-            time.sleep(10)
-            for cookie in driver.get_cookies():
-                self.selenium_cookies[cookie['name']] = cookie['value']
-        try:
-            driver.quit()
-            display.stop()
-        except Exception as e:
-            self.log('Error on driver & display destruction: %s' % str(e))
-
-    def _init_chromium(self):
-        from selenium import webdriver
-        from selenium.webdriver.remote.remote_connection import RemoteConnection
-        RemoteConnection.set_timeout(30)
-        chrome_flags = webdriver.DesiredCapabilities.CHROME  # this is for Chrome?
-        chrome_options = webdriver.ChromeOptions()  # this is for Chromium
-        if self.proxy:
-            chrome_options.add_argument(
-                '--proxy-server=%s' % self.proxy_type+'://'+self.proxy)
-        chrome_flags["chrome.switches"] = ['--user-agent=%s' % self.user_agent]
-        chrome_options.add_argument('--user-agent=%s' % self.user_agent)
-        executable_path = '/usr/sbin/chromedriver'
-        if not os.path.exists(executable_path):
-            executable_path = '/usr/local/bin/chromedriver'
-        # initialize webdriver, open the page and make a screenshot
-        driver = webdriver.Chrome(desired_capabilities=chrome_flags,
-                                  chrome_options=chrome_options,
-                                  executable_path=executable_path)
-        return driver
-
-    def _init_firefox(self):
-        from selenium import webdriver
-        from selenium.webdriver.remote.remote_connection import RemoteConnection
-        RemoteConnection.set_timeout(30)
-        profile = webdriver.FirefoxProfile()
-        profile.set_preference("general.useragent.override", self.user_agent)
-        profile.set_preference("network.proxy.type", 1)  # manual proxy configuration
-        if self.proxy:
-            if 'socks' in self.proxy_type:
-                profile.set_preference("network.proxy.socks", self.proxy.split(':')[0])
-                profile.set_preference("network.proxy.socks_port", int(self.proxy.split(':')[1]))
-            else:
-                profile.set_preference("network.proxy.http", self.proxy.split(':')[0])
-                profile.set_preference("network.proxy.http_port", int(self.proxy.split(':')[1]))
-        profile.update_preferences()
-        driver = webdriver.Firefox(profile)
-        return driver
+    # def _prepare_driver(self, driver):
+    #     driver.set_page_load_timeout(int(self.timeout))
+    #     driver.set_script_timeout(int(self.timeout))
+    #     driver.set_window_size(int(self.width), int(self.height))
+    #
+    # def _get_selenium_cookies_for_main_page(self):
+    #     from pyvirtualdisplay import Display
+    #     display = Display(visible=False)
+    #     display.start()
+    #     driver = self._init_chromium()
+    #     self._prepare_driver(driver)
+    #     try:
+    #         driver.get('http://' + self.allowed_domains[0])
+    #         time.sleep(10)
+    #         for cookie in driver.get_cookies():
+    #             self.selenium_cookies[cookie['name']] = cookie['value']
+    #         driver.quit()
+    #     except Exception as e:
+    #         driver.quit()
+    #         time.sleep(10)
+    #         self.log('Error getting cookies from homepage, trying one more time: %s' % str(e))
+    #         driver.get('http://' + self.allowed_domains[0])
+    #         time.sleep(10)
+    #         for cookie in driver.get_cookies():
+    #             self.selenium_cookies[cookie['name']] = cookie['value']
+    #     try:
+    #         driver.quit()
+    #         display.stop()
+    #     except Exception as e:
+    #         self.log('Error on driver & display destruction: %s' % str(e))
+    #
+    # def _init_chromium(self):
+    #     from selenium import webdriver
+    #     from selenium.webdriver.remote.remote_connection import RemoteConnection
+    #     RemoteConnection.set_timeout(30)
+    #     chrome_flags = webdriver.DesiredCapabilities.CHROME  # this is for Chrome?
+    #     chrome_options = webdriver.ChromeOptions()  # this is for Chromium
+    #     if self.proxy:
+    #         chrome_options.add_argument(
+    #             '--proxy-server=%s' % self.proxy_type+'://'+self.proxy)
+    #     chrome_flags["chrome.switches"] = ['--user-agent=%s' % self.user_agent]
+    #     chrome_options.add_argument('--user-agent=%s' % self.user_agent)
+    #     executable_path = '/usr/sbin/chromedriver'
+    #     if not os.path.exists(executable_path):
+    #         executable_path = '/usr/local/bin/chromedriver'
+    #     # initialize webdriver, open the page and make a screenshot
+    #     driver = webdriver.Chrome(desired_capabilities=chrome_flags,
+    #                               chrome_options=chrome_options,
+    #                               executable_path=executable_path)
+    #     return driver
+    #
+    # def _init_firefox(self):
+    #     from selenium import webdriver
+    #     from selenium.webdriver.remote.remote_connection import RemoteConnection
+    #     RemoteConnection.set_timeout(30)
+    #     profile = webdriver.FirefoxProfile()
+    #     profile.set_preference("general.useragent.override", self.user_agent)
+    #     profile.set_preference("network.proxy.type", 1)  # manual proxy configuration
+    #     if self.proxy:
+    #         if 'socks' in self.proxy_type:
+    #             profile.set_preference("network.proxy.socks", self.proxy.split(':')[0])
+    #             profile.set_preference("network.proxy.socks_port", int(self.proxy.split(':')[1]))
+    #         else:
+    #             profile.set_preference("network.proxy.http", self.proxy.split(':')[0])
+    #             profile.set_preference("network.proxy.http_port", int(self.proxy.split(':')[1]))
+    #     profile.update_preferences()
+    #     driver = webdriver.Firefox(profile)
+    #     return driver
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
