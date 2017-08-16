@@ -2,8 +2,10 @@ from __future__ import division, absolute_import, unicode_literals
 
 import json
 import re
+import time
 import socket
 import urlparse
+import os
 import string
 
 from HP_Master_Project.utils import clean_list
@@ -300,12 +302,10 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         if '/a/browse/' in response.url:    # paginate in category or subcategory
             new_paginate_url = self.parse_paginate_link(response, self.CURRENT_NAO)
             if new_paginate_url:
-                return Request(new_paginate_url, callback=self.parse, meta=response.meta,
-                               cookies=self.selenium_cookies)
+                return Request(new_paginate_url, callback=self.parse, meta=response.meta)
         return Request(
             self.PAGINATE_URL.format(
                 search_term=response.meta['search_term'],
                 nao=str(self.CURRENT_NAO)),
-            callback=self.parse, meta=response.meta,
-            cookies=self.selenium_cookies
+            callback=self.parse, meta=response.meta
         )
