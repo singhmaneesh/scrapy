@@ -42,7 +42,6 @@ boto
 pyvirtualdisplay
 selenium
 xvfbwrapper
-gtk2-engines-pixbuf
 xfonts-cyrillic
 xfonts-100dpi
 xfonts-75dpi
