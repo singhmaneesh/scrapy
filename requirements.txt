@@ -39,3 +39,5 @@ w3lib==1.18.0
 wcwidth==0.1.7
 zope.interface==4.4.2
 boto
+pyvirtualdisplay
+selenium
