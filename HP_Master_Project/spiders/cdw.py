@@ -8,7 +8,7 @@ class CDWSpider(SitemapSpider):
     site_url = 'https://www.cdw.com'
     uri = {
 
-    'computers': '/shop/search/Computers/result.aspx?w =C&key=&ln=0&b=CPQ&pCurrent=199&pPage=1',
+    'computers': '/shop/search/Computers/result.aspx?w=C&key=&ln=0&b=CPQ',
     'displays':'/shop/search/Monitors-Projectors/result.aspx?w=D&key=&ln=0&b=CPQ',
     'printers_supplies':'/shop/search/Printers-Scanners-Print-Supplies/result.aspx?w=P&key=&ln=0&b=CPQ',
     'services': '/shop/search/Services/result.aspx?w=G&key=&ln=0&b=CPQ'
@@ -30,6 +30,16 @@ class CDWSpider(SitemapSpider):
                 callback=self.parse_product
             )
 
+        pagination_container = response.css('div.search-pagination-list-container')
+        if pagination_container:
+            next_link = pagination_container.css('a:nth-last-child(2)::attr(href)').extract_first()
+            if next_link:
+                next_link = self.parse_product_link(next_link)
+                yield Request(
+                    url=next_link,
+                    callback=self.parse_computers
+                )
+
 
     def parse_product(self, response):
         product = ProductItem()
@@ -38,11 +48,11 @@ class CDWSpider(SitemapSpider):
         product['link'] = response.url
         product['currencycode'] = response.css('div#singleContainer span[itemprop="priceCurrency"]::attr(content)').extract_first()
         product['price'] = response.css('div#singleContainer span[itemprop="price"]::attr(content)').extract_first()
-        availability = response.css('div#primaryProductAvailability span::text').extract()
+        availability = response.css('div#primaryProductAvailability div.short-message-block span.message::text').extract_first()
         product['productstockstatus'] = self.get_product_stock_status(availability)
         product['instore'] = self.get_instore_status(availability)
         product['locale'] = 'en-US'
-
+        product['gallery'] = response.css('div.main-media  > div.main-image >img::attr(src)').extract_first()
         sku = response.css('div#primaryProductPartNumbers span.part-number')
         product['sku'] = sku[0].css('span span::text').extract_first()
         retailer_key = sku[1].css('span::text').extract_first()
@@ -50,6 +60,7 @@ class CDWSpider(SitemapSpider):
         product['retailer_key'] = retailer_key[1]
         specs = response.css('div.feature-list ul li')
         product['features'] = self.get_specifications(specs)
+        product['shiptostore'] = 0
 
         return product
 
@@ -63,7 +74,7 @@ class CDWSpider(SitemapSpider):
         elif availability == 'Call':
             return 2
         else :
-            return 4
+            return 0
 
     def get_instore_status(self, availability):
         if availability == 'In Stock':
