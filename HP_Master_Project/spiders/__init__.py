@@ -61,6 +61,7 @@ def cond_set_value(item, key, value, conv=identity):
     if item.get(key) is None and value is not None and conv(value) is not None:
         item[key] = conv(value)
 
+
 def cond_replace(item, key, values, conv=identity):
     """Conditionally replaces item[key] with the first element in the given
     iterable.
@@ -74,6 +75,7 @@ def cond_replace(item, key, values, conv=identity):
     except StopIteration:
         pass
 
+
 def cond_replace_value(item, key, value, conv=identity):
     """Conditionally replaces item[key] with new value.
 
@@ -81,6 +83,7 @@ def cond_replace_value(item, key, value, conv=identity):
     """
     if value is not None and conv(value) is not None:
         item[key] = conv(value)
+
 
 class FormatterWithDefaults(string.Formatter):
 
