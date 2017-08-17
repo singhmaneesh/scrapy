@@ -158,7 +158,8 @@ class ZonesSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_image(response):
-        img = response.xpath('//div[@class="product-image"]//img[contains(@class, "primary-image")]/text()').extract()
+        img = response.xpath('//div[@class="product-image"]//img[contains(@class, "primary-image")]'
+                             '/@src').extract()
         if img:
             return img[0]
 
