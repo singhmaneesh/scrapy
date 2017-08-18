@@ -15,9 +15,14 @@ class ConnectionSpider(scrapy.Spider):
     name = "connection_products"
     allowed_domains = ['https://www.connection.com']
 
-    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term={search_term}'
+    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821&Sort=Availability&DefSort=Y#10~Availability~12~List'
+    #SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term={search_term}'
 
-    Paginate_URL = 'https://www.connection.com/product/searchpage?SearchType=1&term={search_term}' \
+    #Paginate_URL = 'https://www.connection.com/product/searchpage?SearchType=1&term={search_term}' \
+    #               '&pageNumber={page_num}&pageSize={result_per_page}&' \
+    #               'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'
+            
+    Paginate_URL = 'https://www.connection.com/product/searchpage?ManufId=4293851212+4293836821&Sort=Availability' \
                    '&pageNumber={page_num}&pageSize={result_per_page}&' \
                    'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'
 
