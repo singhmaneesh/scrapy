@@ -135,16 +135,13 @@ class ZonesSpider(BaseProductsSpider):
         product_id = response.xpath('//input[@id="product_id"]/@value').extract()
         if product_id:
             current_time = int(round(time.time() * 1000))
-            page_name = response.xpath('//input[@name="page_name"]/@value').extract()
             return Request(
                 url=self.STOCK_STATUS_URL.format(prod_id=product_id[0],
                                                  time=current_time),
                 callback=self._parse_stock_status,
                 dont_filter=True,
                 meta={"product": product},
-                headers={"Referer": "http://www.zones.com/site/product/index.html?"
-                                    "id={id}&page_name={p_name}".format(id=product_id[0], p_name=page_name[0]),
-                         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
                                        'Chrome/60.0.3112.90 Safari/537.36'}
             )
 
