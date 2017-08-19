@@ -1,56 +1,31 @@
 # -*- coding: utf-8 -*-
-
-# Define here the models for your spider middleware
-#
-# See documentation in:
-# http://doc.scrapy.org/en/latest/topics/spider-middleware.html
-
+import logging
+from fake_useragent import UserAgent
 from scrapy import signals
+from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
 
+class RandomUserAgentMiddleware(UserAgentMiddleware):
 
-class HpMasterProjectSpiderMiddleware(object):
-    # Not all methods need to be defined. If a method is not defined,
-    # scrapy acts as if the spider middleware does not modify the
-    # passed objects.
+    def __init__(self, settings, user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101"
+                                            " Firefox/54.0"):
+        super(RandomUserAgentMiddleware, self).__init__()
+        self.user_agent = user_agent
+        try:
+            self.user_agent_engine = UserAgent()
+        except Exception, ex:
+            logging.error("Failed to create user agent engine object. Reason: %s", ex)
 
     @classmethod
     def from_crawler(cls, crawler):
-        # This method is used by Scrapy to create your spiders.
-        s = cls()
-        crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
-        return s
+        obj = cls(crawler.settings)
+        crawler.signals.connect(obj.spider_opened, signal=signals.spider_opened)
+        return obj
 
-    def process_spider_input(response, spider):
-        # Called for each response that goes through the spider
-        # middleware and into the spider.
-
-        # Should return None or raise an exception.
-        return None
-
-    def process_spider_output(response, result, spider):
-        # Called with the results returned from the Spider, after
-        # it has processed the response.
-
-        # Must return an iterable of Request, dict or Item objects.
-        for i in result:
-            yield i
-
-    def process_spider_exception(response, exception, spider):
-        # Called when a spider or process_spider_input() method
-        # (from other spider middleware) raises an exception.
-
-        # Should return either None or an iterable of Response, dict
-        # or Item objects.
-        pass
-
-    def process_start_requests(start_requests, spider):
-        # Called with the start requests of the spider, and works
-        # similarly to the process_spider_output() method, except
-        # that it doesn’t have a response associated.
-
-        # Must return only requests (not items).
-        for r in start_requests:
-            yield r
-
-    def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+    def process_request(self, request, spider):
+        try:
+            user_agent = self.user_agent_engine.random
+        except Exception, ex:
+            logging.error("Failed to get the automatic user agent. Reason: %s", ex)
+            user_agent = self.user_agent
+        logging.info("Using user agent (%s)", user_agent)
+        request.headers.setdefault('User-Agent', user_agent)
