@@ -38,3 +38,4 @@ Twisted==17.5.0
 w3lib==1.18.0
 wcwidth==0.1.7
 zope.interface==4.4.2
+fake-useragent==0.1.7
