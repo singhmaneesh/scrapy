@@ -3,6 +3,7 @@ import scrapy
 import json
 import urlparse
 import urllib
+import logging
 
 from HP_Master_Project.items import ProductItem
 
@@ -22,13 +23,13 @@ class EnUsInsightSpider(scrapy.Spider):
 
 
     def parse_products_api(self, response):
-        import ipdb; ipdb.set_trace()
+        self.logger.error("Start parsing products response")
         try:
             json_response = json.loads(response.body.decode("utf-8","ignore"))
         except TypeError as e:
-            self.logger(e.message + "Json respone cannot be parsed")
+            self.logger.error(e.message + "Json respone cannot be parsed")
         except Exception as e:
-            self.logger(e.message)
+            self.logger.error(e.message)
         else:
             if self.flag:
                 num_products = json_response["shown"]
@@ -47,9 +48,9 @@ class EnUsInsightSpider(scrapy.Spider):
         try:
             json_response = json.loads(response.body.decode("utf-8","ignore"))
         except TypeError as e:
-            self.logger(e.message + "Json respone cannot be parsed")
+            self.logger.error(e.message + "Json respone cannot be parsed")
         except Exception as e:
-            self.logger(e.message)
+            self.logger.error(e.message)
         else:
             return self.parse_product_item(json_response)
 
