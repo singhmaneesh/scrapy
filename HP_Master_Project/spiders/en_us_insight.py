@@ -23,7 +23,7 @@ class EnUsInsightSpider(scrapy.Spider):
 
 
     def parse_products_api(self, response):
-        self.logger.error("Start parsing products response")
+        self.logger.info("Start parsing products response")
         try:
             json_response = json.loads(response.body.decode("utf-8","ignore"))
         except TypeError as e:
