@@ -3,7 +3,7 @@ from HP_Master_Project.items import ProductItem
 from HP_Master_Project.item_loader import ProductItemLoader
 
 class HPSpider(SitemapSpider):
-    name="hp.com"
+    name="en-US_HP.com"
     sitemap_urls = ['http://store.hp.com/sitemap-us.xml']
     sitemap_rules = [
         ('/us/en/pdp/', 'parse_product'),
