@@ -47,10 +47,14 @@ def instore_out(field, values):
 
 class ProductItemLoader(ItemLoader):
     default_item_class = ProductItem
+    name_in = MapCompose(unicode.strip)
     name_out = TakeFirst()
+    brand_in = MapCompose(unicode.strip)
     brand_out = TakeFirst()
+    image_in = MapCompose(unicode.strip)
     image_out = TakeFirst()
     link_out = TakeFirst()
+    model_in = MapCompose(unicode.strip)
     model_out = TakeFirst()
     upc_out = to_int
     ean_out = to_int
@@ -59,14 +63,18 @@ class ProductItemLoader(ItemLoader):
     price_out = price_out
     saleprice_out = price_out
     sku_out = TakeFirst()
+    retailer_key_in = MapCompose(unicode.strip)
     retailer_key_out = TakeFirst()
     instore_out = instore_out
     shiptostore_out = TakeFirst()
+    shippingphrase_in = MapCompose(unicode.strip)
     shippingphrase_out = TakeFirst()
     productstockstatus_out = productstockstatus_out     # Integer (outOfStock=0, inStock=1, call for availability=2, Discontinued=3,Other=4)
-    categories_out = clean_text
-    gallery_out = Join(';')
+    categories_in = MapCompose(unicode.strip)
+    gallery_in = MapCompose(unicode.strip)
     # features_out = features_out
     condition_out = condition_out
+    publisher_in = MapCompose(unicode.strip)
     publisher_out = TakeFirst()
+    manufacturer_in = MapCompose(unicode.strip)
     manufacturer_out = TakeFirst()
