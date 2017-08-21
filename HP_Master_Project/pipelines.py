@@ -8,10 +8,24 @@
 
 from scrapy import signals
 from scrapy.contrib.exporter import CsvItemExporter
+from scrapy.exceptions import DropItem
 
 
-class HpMasterProjectPipeline(object):
+
+class ItemValidationPipeline(object):
+
+    def is_item_valid(self, item):
+        required_attributes = ["name", "link", "locale"]
+        for attribute in required_attributes:
+            if not item[attribute]:
+                return False
+        return True
+
+
     def process_item(self, item, spider):
+        # Do sanity check on the item
+        if not self.is_item_valid(item):
+            raise DropItem("Item is not valid, some attribute is missing")
         return item
 
 

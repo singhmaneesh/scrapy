@@ -17,6 +17,7 @@ class ProductItem(scrapy.Item):
     model = scrapy.Field()  # String, Alphanumeric code
     upc = scrapy.Field()    # Integer, 12 digit code
     ean = scrapy.Field()    # Integer, 13 digit International Article Number
+    unspsc = scrapy.Field()
     currencycode = scrapy.Field()   # String
     locale = scrapy.Field()     # String
     price = scrapy.Field()  # Float
