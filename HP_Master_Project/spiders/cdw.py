@@ -44,23 +44,29 @@ class CDWSpider(SitemapSpider):
     def parse_product(self, response):
         product = ProductItem()
         product['name'] = response.css('h1#primaryProductName span::text').extract_first()
-        product['image'] = response.css('div.main-media  > div.main-image >img::attr(src)').extract_first()
+        image = self.get_image(response)
+        if (image):
+            product['image'] = image
         product['link'] = response.url
         product['currencycode'] = response.css('div#singleContainer span[itemprop="priceCurrency"]::attr(content)').extract_first()
         product['price'] = response.css('div#singleContainer span[itemprop="price"]::attr(content)').extract_first()
         availability = response.css('div#primaryProductAvailability div.short-message-block span.message::text').extract_first()
         product['productstockstatus'] = self.get_product_stock_status(availability)
-        product['instore'] = self.get_instore_status(availability)
         product['locale'] = 'en-US'
-        product['gallery'] = response.css('div.main-media  > div.main-image >img::attr(src)').extract_first()
+        product['gallery'] = []
+        if image:
+            product['gallery'].append(image)
         sku = response.css('div#primaryProductPartNumbers span.part-number')
         product['sku'] = sku[0].css('span span::text').extract_first()
         retailer_key = sku[1].css('span::text').extract_first()
         retailer_key = retailer_key.split(':')
         product['retailer_key'] = retailer_key[1]
+        if len(sku) > 2:
+            product['unspsc'] = sku[2].css('span span::text').extract_first()
         specs = response.css('div.feature-list ul li')
         product['features'] = self.get_specifications(specs)
         product['shiptostore'] = 0
+        product['categories'] = response.css('div#_pnlNavigationBar span[itemprop="name"]::text').extract()
 
         return product
 
@@ -76,14 +82,18 @@ class CDWSpider(SitemapSpider):
         else :
             return 0
 
-    def get_instore_status(self, availability):
-        if availability == 'In Stock':
-            return 1
-        else:
-            return 0
     def get_specifications(self, specification_body):
         specs = []
         for spec in specification_body:
             specs.append(spec.css('::text').extract_first())
         return specs
+
+    def get_image(self, response):
+        image = response.css('div.main-media  > div.main-image >img::attr(src)').extract_first()
+        if image.find('data:image') != -1:
+            image = response.css('div.main-media  > div.main-image >img::attr(data-blzsrc)').extract_first()
+            if image:
+                return image
+            return ''
+        return image
 

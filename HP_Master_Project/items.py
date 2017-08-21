@@ -41,6 +41,7 @@ class ProductItem(scrapy.Item):
     condition = scrapy.Field()  # Integer (New=1, Refurbished=2, Used=3, Damaged=4)
     publisher = scrapy.Field()  # String
     manufacturer = scrapy.Field()   # String
+    unspsc = scrapy.Field()  # String
 
 
 
