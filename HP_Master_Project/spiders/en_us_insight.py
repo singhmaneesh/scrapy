@@ -88,8 +88,8 @@ class EnUsInsightSpider(scrapy.Spider):
         features = []
         for specs in json_response["webProduct"]["extendedSpecsMap"]:
             for spec in range(len(json_response["webProduct"]["extendedSpecsMap"][specs]["details"])):
-                features.append((json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["label"],
-                                 json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["value"]))
+                features.append({json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["label"]:
+                                 json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["value"]})
         return features
 
     def get_product_url(self, json_response):
