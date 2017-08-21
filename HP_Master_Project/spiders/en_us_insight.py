@@ -44,8 +44,6 @@ class EnUsInsightSpider(scrapy.Spider):
                                  headers={'Content-Type': 'application/json'}, callback=self.parse_products_api)
 
     def parse_product_response(self, response):
-        import ipdb;
-        ipdb.set_trace()
         try:
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
