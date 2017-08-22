@@ -208,13 +208,13 @@ class HpSpider(BaseProductsSpider):
 
         for f_name in features_name:
             index = features_name.index(f_name)
-            features_value_content = is_empty(features_value[index].xpath('.//p[@class="specsDescription"]'
-                                                                          '/span/text()').extract())
+            features_value_content = features_value[index].xpath('.//p[@class="specsDescription"]'
+                                                                 '/span/text()').extract()
             if features_value_content:
                 features_value_content = features_value_content[0]
             else:
                 features_value_content = is_empty(features_value[index].xpath('.//a/@href').extract())
-            feature = {f_name: self.clear_text(features_value_content)}
+            feature = {f_name: self.clear_text(features_value_content)} if features_value_content else {f_name: ""}
             features.append(feature)
 
         return features
