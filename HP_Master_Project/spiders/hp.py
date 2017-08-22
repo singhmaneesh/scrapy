@@ -5,6 +5,7 @@ from scrapy.log import WARNING
 from scrapy import Request
 import re
 import urlparse
+import traceback
 
 from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
@@ -13,7 +14,7 @@ from HP_Master_Project.spiders import BaseProductsSpider
 
 class HpSpider(BaseProductsSpider):
     name = 'hp_products'
-    allowed_domains = ['store.hp.com', "www.hp.com"]
+    allowed_domains = ['store.hp.com', 'www.hp.com']
 
     SEARCH_URL = "http://store.hp.com/us/en/SearchDisplay?client=&searchTerm={search_term}&search=&charset=utf-8" \
                  "&storeId=10151&catalogId=10051&langId=-1&beginIndex=0&pageSize=12"
@@ -26,21 +27,14 @@ class HpSpider(BaseProductsSpider):
     CATEGORY_URL = "http://store.hp.com/webapp/wcs/stores/servlet/HPBreadCrumbView?productId={product_id}" \
                    "&langId=-1&storeId=10151&catalogId=10051&urlLangId=-1&modelId={model_id}"
 
-    HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                             "Chrome/60.0.3112.90 Safari/537.36"}
-
     TOTAL_MATCHES = None
 
     def __init__(self, *args, **kwargs):
         super(HpSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
         self.current_page = 0
-
-    def start_requests(self):
-        for request in super(HpSpider, self).start_requests():
-            if not self.product_url:
-                request = request.replace(dont_filter=True, headers=self.HEADERS)
-            yield request
+        self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
+                          "Chrome/60.0.3112.90 Safari/537.36"
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -59,10 +53,6 @@ class HpSpider(BaseProductsSpider):
         # Parse model
         model = self._parse_model(response)
         product['model'] = model
-
-        # Parse upc
-        upc = self._parse_upc(response)
-        product['upc'] = upc
 
         # Parse ean
         product['ean'] = None
@@ -147,12 +137,9 @@ class HpSpider(BaseProductsSpider):
             return self.clear_text(sku[0])
 
     def _parse_stock_status(self, response):
-        product = response.meta['product']
         stock_value = 4
-
         try:
             stock_message = response.xpath('//*[@itemprop="availability"]/@href')[0].extract()
-
             if 'instock' in stock_message.lower():
                 stock_value = 1
             if 'outofstock' in stock_message.lower():
@@ -162,13 +149,10 @@ class HpSpider(BaseProductsSpider):
             if 'discontinued' in stock_message.lower():
                 stock_value = 3
 
-            product['productstockstatus'] = stock_value
-            return product
-
         except BaseException as e:
             self.log("Error parsing stock status data: {}".format(e), WARNING)
-            product['productstockstatus'] = stock_value
-            return product
+
+        return stock_value
 
     @staticmethod
     def _parse_categories(response):
@@ -182,9 +166,6 @@ class HpSpider(BaseProductsSpider):
         model = response.xpath('//span[contains(@id, "mfr_no_id")]/text()').extract()
         if model:
             return self.clear_text(model[0])
-
-    def _parse_upc(self, response):
-        return
 
     @staticmethod
     def _parse_gallery(response):
@@ -254,23 +235,24 @@ class HpSpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[contains(@id, "searchResults")]//div[@class="productWrapper"]'
-                               '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
+        try:
+            links = response.xpath('//div[@class="productWrapper"]'
+                                   '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
 
-        for link in links:
-            link = urlparse.urljoin(response.url, link)
-            yield link, ProductItem()
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
+        except:
+            self.log("Found no product links {}".format(traceback.format_exc()))
+            yield None
 
     def _scrape_next_results_page_link(self, response):
-        if self.current_page * response.meta['scraped_results_per_page'] >= self.TOTAL_MATCHES:
-            return
+        page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page']
+        search_term = response.meta['search_term']
         self.current_page += 1
 
         begin_index = self.current_page * response.meta['scraped_results_per_page']
-        return Request(
-            url=self.PAGINATE_URL.format(search_term=response.meta['search_term'],
-                                         begin_index=begin_index),
-            dont_filter=True,
-            headers=self.HEADERS,
-            meta=response.meta
-        )
+
+        if self.current_page <= page_count:
+            next_page = self.PAGINATE_URL.format(search_term=search_term, begin_index=begin_index)
+            return next_page
