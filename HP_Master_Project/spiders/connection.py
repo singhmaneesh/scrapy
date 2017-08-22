@@ -1,71 +1,39 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-import scrapy
 import re
-from scrapy import Request
 import urlparse
+from scrapy.log import INFO
 
-import urllib
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
+from HP_Master_Project.spiders import BaseProductsSpider
 
 
-class ConnectionSpider(scrapy.Spider):
+class ConnectionSpider(BaseProductsSpider):
     name = "connection_products"
-    allowed_domains = ['https://www.connection.com']
+    allowed_domains = ['connection.com', 'www.connection.com']
 
-    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821&Sort=Availability&DefSort=Y#10~Availability~12~List'
-    #SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?SearchType=1&term={search_term}'
+    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821'
 
-    #Paginate_URL = 'https://www.connection.com/product/searchpage?SearchType=1&term={search_term}' \
-    #               '&pageNumber={page_num}&pageSize={result_per_page}&' \
-    #               'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'
-            
     Paginate_URL = 'https://www.connection.com/product/searchpage?ManufId=4293851212+4293836821&Sort=Availability' \
                    '&pageNumber={page_num}&pageSize={result_per_page}&' \
                    'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'
 
-    link = []
+    TOTAL_MATCHES = None
 
-    def start_requests(self):
-        yield Request(
-            url=self.SEARCH_URL.format(search_term=urllib.quote_plus(self.searchterm.encode('utf-8'))),
-            callback=self.parse_links
-        )
+    RESULT_PER_PAGE = None
 
-    def parse_links(self, response):
-        total_match = re.search('of (\d+) Results', response.body)
-        total_match = int(total_match.group(1)) if total_match else 0
+    def __init__(self, *args, **kwargs):
+        super(ConnectionSpider, self).__init__(
+            site_name=self.allowed_domains[0], *args, **kwargs)
+        self.current_page = 1
 
-        result_per_page = re.search('1 - (\d+) of', response.body)
-        result_per_page = int(result_per_page.group(1)) if result_per_page else 12
-
-        page_count = total_match / result_per_page + 1
-
-        total_page_links = []
-        for i in range(1, int(page_count) + 1):
-            page_link = self.Paginate_URL.format(search_term=urllib.quote_plus(self.searchterm.encode('utf-8'))
-                                                 ,page_num=i, result_per_page=result_per_page)
-            total_page_links.append(page_link)
-
-        for total_page_link in total_page_links:
-            yield Request(url=total_page_link, callback=self.parse_link, dont_filter=True)
-
-    def parse_link(self, response):
-        product_links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
-
-        for product_link in list(set(product_links)):
-            prod_link = urlparse.urljoin(response.url, product_link)
-            if prod_link in self.link:
-                return
-            self.link.append(prod_link)
-            yield Request(url=prod_link, callback=self.parse_product, dont_filter=True)
+    def _parse_single_product(self, response):
+        return self.parse_product(response)
 
     def parse_product(self, response):
         product = ProductItem()
-
-        self.link.append(response.url)
 
         # Parse name
         name = self._parse_name(response)
@@ -79,19 +47,11 @@ class ConnectionSpider(scrapy.Spider):
         image = self._parse_image(response)
         product['image'] = image
 
-        # Parse link
         product['link'] = response.url
 
         # Parse model
         model = self._parse_model(response)
         product['model'] = model
-
-        # Parse upc
-        upc = self._parse_upc(response)
-        product['upc'] = upc
-
-        # Parse ean
-        product['ean'] = None
 
         # Parse currencycode
         product['currencycode'] = 'USD'
@@ -131,7 +91,8 @@ class ConnectionSpider(scrapy.Spider):
         product['productstockstatus'] = stock_status
 
         # Parse gallery
-        product['gallery'] = None
+        gallery = self._parse_gallery(response)
+        product['gallery'] = gallery
 
         # Parse features
 
@@ -152,20 +113,22 @@ class ConnectionSpider(scrapy.Spider):
         brand = response.xpath('//span[@itemprop="brand"]/text()')
         if brand:
             return extract_first(brand)
-        return self.searchterm.upper()
+        return 'HP'
 
     @staticmethod
     def _parse_image(response):
         image_url = extract_first(response.xpath('//a[@item-prop="image"]/@href'))
         return image_url
 
+    @staticmethod
+    def _parse_gallery(response):
+        gallery = response.xpath('//div[contains(@id, "productImageBrowser")]'
+                                 '//img[@class="img-responsive"]/@src').extract()
+        return gallery
+
     def _parse_model(self, response):
         model = extract_first(response.xpath('//span[@itemprop="mpn"]/text()'))
         return clean_text(self, model)
-
-    @staticmethod
-    def _parse_upc(response):
-        return None
 
     @staticmethod
     def _parse_price(response):
@@ -255,3 +218,42 @@ class ConnectionSpider(scrapy.Spider):
                 features.append(feature)
 
         return features
+
+    def _scrape_total_matches(self, response):
+        totals = re.search('of (\d+) Results', response.body)
+
+        if totals:
+            totals = totals.group(1).replace(',', '').replace('.', '').strip()
+            if totals.isdigit():
+                if not self.TOTAL_MATCHES:
+                    self.TOTAL_MATCHES = int(totals)
+                return int(totals)
+
+    def _scrape_results_per_page(self, response):
+        result_per_page = re.search('1 - (\d+) of', response.body)
+        if result_per_page:
+            result_per_page = result_per_page.group(1).replace(',', '').replace('.', '').strip()
+            if result_per_page.isdigit():
+                if not self.RESULT_PER_PAGE:
+                    self.RESULT_PER_PAGE = int(result_per_page)
+                return int(result_per_page)
+
+    def _scrape_product_links(self, response):
+        links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
+
+        if links:
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
+        else:
+            self.log("Found no product links in {url}".format(url=response.url), INFO)
+
+    def _scrape_next_results_page_link(self, response):
+        page_count = self.TOTAL_MATCHES / self.RESULT_PER_PAGE + 1
+
+        self.current_page += 1
+
+        if self.current_page <= page_count:
+            next_page = self.Paginate_URL.format(page_num=self.current_page,
+                                                 result_per_page=self.RESULT_PER_PAGE)
+            return next_page
