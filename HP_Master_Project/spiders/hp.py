@@ -247,7 +247,7 @@ class HpSpider(BaseProductsSpider):
             yield None
 
     def _scrape_next_results_page_link(self, response):
-        page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page']
+        page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page'] + 1
         search_term = response.meta['search_term']
         self.current_page += 1
 
