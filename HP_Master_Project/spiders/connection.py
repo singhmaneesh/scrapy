@@ -47,6 +47,8 @@ class ConnectionSpider(BaseProductsSpider):
         image = self._parse_image(response)
         product['image'] = image
 
+        product['link'] = response.url
+
         # Parse model
         model = self._parse_model(response)
         product['model'] = model
