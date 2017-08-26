@@ -1,13 +1,33 @@
-from scrapy.spiders import SitemapSpider
+from scrapy import Request
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.item_loader import ProductItemLoader
 
-class HPSpider(SitemapSpider):
+class HPSpider(CrawlSpider):
     name="en-US_HP.com"
-    sitemap_urls = ['http://store.hp.com/sitemap-us.xml']
-    sitemap_rules = [
-        ('/us/en/pdp/', 'parse_product'),
-    ]
+    allowed_domains = ['hp.com', 'www.hp.com', 'store.hp.com']
+    start_urls = ['http://www8.hp.com/us/en/sitemap.html', 'http://store.hp.com/sitemap-us.xml']
+   
+    rules = (
+        Rule(LinkExtractor(allow=r'hp\.com\/us\/en\/pdp\/'), callback='parse_product', follow=False),
+        Rule(LinkExtractor(allow=r'^http:\/\/store\.hp\.com\/us\/en\/'), follow=True),
+    )
+
+    def start_requests(self):
+        for url in self.start_urls:
+            if 'sitemap-us.xml' in url:
+                yield Request(url, callback=self.parse_sitemap)
+            else:
+                yield Request(url)
+
+    def parse_sitemap(self, response):
+        for url in response.xpath('//*[name()="loc"]/text()').extract():
+            url = url.strip()
+            if '/us/en/pdp/' in url:
+                yield Request(url, callback=self.parse_product)
+            else:
+                yield Request(url)
 
     def _extract_features(self, response):
         features = {}
@@ -47,7 +67,7 @@ class HPSpider(SitemapSpider):
         l.add_value('manufacturer', features.get('Manufacturer', None))
         l.add_value('mpn', features.get('Manufacturer Part Number', None))
         item = l.load_item()
-        if item['saleprice'] == item['price']:
+        if 'saleprice' in item and item['saleprice'] == item['price']:
             item['saleprice'] = None
 
         return item
