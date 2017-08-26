@@ -16,6 +16,10 @@ class ConnectionSpider(BaseProductsSpider):
 
     SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821'
 
+    API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica+scrapingapi@gmail.com' \
+              '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
+
     Paginate_URL = 'https://www.connection.com/product/searchpage?ManufId=4293851212+4293836821&Sort=Availability' \
                    '&pageNumber={page_num}&pageSize={result_per_page}&' \
                    'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'

@@ -157,6 +157,8 @@ class BaseProductsSpider(Spider):
 
     SEARCH_URL = None  # Override.
 
+    API_URL = None
+
     MAX_RETRIES = 3
 
     USER_AGENTS = {
@@ -189,6 +191,7 @@ class BaseProductsSpider(Spider):
                  searchterms_str=None, searchterms_fn=None,
                  site_name=None,
                  product_url=None, products_url=None,
+                 retailer_id=None,
                  user_agent=None,
                  scrape_variants_with_extra_requests=True,
                  summary=None,
@@ -243,6 +246,7 @@ class BaseProductsSpider(Spider):
 
         self.product_url = product_url
         self.products_url = products_url
+        self.retailer_id = retailer_id
 
         self.searchterms = []
         if searchterms_str is not None:
@@ -275,6 +279,15 @@ class BaseProductsSpider(Spider):
                     search_term=urllib.quote_plus(st.encode('utf-8')),
                 ),
                 meta={'search_term': st, 'remaining': self.quantity},
+            )
+
+        if self.retailer_id:
+            yield Request(
+                self.url_formatter.format(
+                    self.API_URL,
+                    retailer_id=int(self.retailer_id),
+                ),
+                meta={'search_term': '', 'remaining': self.quantity}
             )
 
         if self.product_url:
