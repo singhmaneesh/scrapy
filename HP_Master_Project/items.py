@@ -42,6 +42,7 @@ class ProductItem(scrapy.Item):
     publisher = scrapy.Field()  # String
     manufacturer = scrapy.Field()   # String
     unspsc = scrapy.Field()  # String
+    retailer_id = scrapy.Field()  # String
 
 
 

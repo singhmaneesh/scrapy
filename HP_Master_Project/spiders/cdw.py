@@ -67,6 +67,7 @@ class CDWSpider(SitemapSpider):
         product['features'] = self.get_specifications(specs)
         product['shiptostore'] = 0
         product['categories'] = response.css('div#_pnlNavigationBar span[itemprop="name"]::text').extract()
+        product['retailer_id'] = 5
 
         return product
 
