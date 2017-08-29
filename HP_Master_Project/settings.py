@@ -22,7 +22,7 @@ ITEM_PIPLINES = {'HP_Master_Project.CSVPipeline': 300}
 #USER_AGENT = 'HP_Master_Project (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 SHUB_KEY = os.getenv('1e43437dbeef4754bc239df039613488')
 # if you want to run it locally, replace '999999' by your Scrapy Cloud project ID below

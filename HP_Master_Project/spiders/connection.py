@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 import re
 import urlparse
+import json
 from scrapy.log import INFO
 
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
@@ -17,7 +18,7 @@ class ConnectionSpider(BaseProductsSpider):
     SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821'
 
     API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
-              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica+scrapingapi@gmail.com' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
               '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
     Paginate_URL = 'https://www.connection.com/product/searchpage?ManufId=4293851212+4293836821&Sort=Availability' \
@@ -225,15 +226,19 @@ class ConnectionSpider(BaseProductsSpider):
 
     def _scrape_total_matches(self, response):
         totals = re.search('of (\d+) Results', response.body)
-
         if totals:
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
             if totals.isdigit():
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
                 return int(totals)
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
 
     def _scrape_results_per_page(self, response):
+        if self.retailer_id:
+            return None
         result_per_page = re.search('1 - (\d+) of', response.body)
         if result_per_page:
             result_per_page = result_per_page.group(1).replace(',', '').replace('.', '').strip()
@@ -245,14 +250,23 @@ class ConnectionSpider(BaseProductsSpider):
     def _scrape_product_links(self, response):
         links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
 
-        if links:
-            for link in links:
-                url = urlparse.urljoin(response.url, link)
-                yield url, ProductItem()
+        if not links:
+            data = json.loads(response.body)
+            link_list = data
+            for link in link_list:
+                link = link['product_link']
+                links.append(link)
+
         else:
             self.log("Found no product links in {url}".format(url=response.url), INFO)
 
+        for link in links:
+            url = urlparse.urljoin(response.url, link)
+            yield url, ProductItem()
+
     def _scrape_next_results_page_link(self, response):
+        if self.retailer_id:
+            return None
         page_count = self.TOTAL_MATCHES / self.RESULT_PER_PAGE + 1
 
         self.current_page += 1
