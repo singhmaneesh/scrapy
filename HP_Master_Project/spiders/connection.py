@@ -257,9 +257,6 @@ class ConnectionSpider(BaseProductsSpider):
                 link = link['product_link']
                 links.append(link)
 
-        else:
-            self.log("Found no product links in {url}".format(url=response.url), INFO)
-
         for link in links:
             url = urlparse.urljoin(response.url, link)
             yield url, ProductItem()
