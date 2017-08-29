@@ -254,8 +254,6 @@ class BaseProductsSpider(Spider):
         elif searchterms_fn is not None:
             with open(searchterms_fn, encoding='utf-8') as f:
                 self.searchterms = f.readlines()
-        else:
-            self.log("No search terms provided!", ERROR)
 
         # notify QA's about sqs-tools jobs
         if 'slack_username' in kwargs:
