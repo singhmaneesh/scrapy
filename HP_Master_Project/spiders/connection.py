@@ -4,7 +4,6 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 import urlparse
 import json
-from scrapy.log import INFO
 
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem

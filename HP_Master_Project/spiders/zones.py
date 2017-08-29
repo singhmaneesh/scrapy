@@ -5,6 +5,7 @@ from scrapy import Request, FormRequest
 from scrapy.log import WARNING
 import re
 import time
+import json
 from scrapy.conf import settings
 
 from HP_Master_Project.utils import clean_list
@@ -17,6 +18,10 @@ class ZonesSpider(BaseProductsSpider):
     allowed_domains = ['zones.com', "www.zones.com"]
 
     SEARCH_URL = "http://www.zones.com/site/locate/search.html?txt_search={search_term}"
+
+    API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
+              '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
     PAGINATE_URL = "http://www.zones.com/site/locate/refine.html?&preserve=true"
 
@@ -42,7 +47,7 @@ class ZonesSpider(BaseProductsSpider):
 
     def parse_search(self, response):
         page_title = response.xpath('//div[@class="page-title"]').extract()
-        if page_title:
+        if page_title or self.retailer_id:
             return self.parse(response)
 
         else:
@@ -74,10 +79,6 @@ class ZonesSpider(BaseProductsSpider):
         model = self._parse_model(response)
         product['model'] = model
 
-        # Parse upc
-        upc = self._parse_upc(response)
-        product['upc'] = upc
-
         # Parse ean
         product['ean'] = None
 
@@ -104,7 +105,7 @@ class ZonesSpider(BaseProductsSpider):
         product['price'] = price
 
         # Parse sale price
-        product['saleprice'] = price
+        product['saleprice'] = self._parse_sale_price(response)
 
         # Parse retailer_key
         retailer_key = self._parse_retailer_key(response)
@@ -113,14 +114,6 @@ class ZonesSpider(BaseProductsSpider):
         # Parse in_store
         in_store = self._parse_instore(response)
         product['instore'] = in_store
-
-        # Parse ship to store
-        ship_to_store = self._parse_shiptostore(response)
-        product['shiptostore'] = ship_to_store
-
-        # Parse shipping phrase
-        shipping_phrase = self._parse_shippingphrase(response)
-        product['shippingphrase'] = shipping_phrase
 
         # Parse gallery
         product['gallery'] = self._parse_gallery(response)
@@ -199,9 +192,6 @@ class ZonesSpider(BaseProductsSpider):
         if model:
             return self.clear_text(model[0])
 
-    def _parse_upc(self, response):
-        return
-
     @staticmethod
     def _parse_gallery(response):
         gallery = response.xpath('//div[@class="thumbs-wrapper"]/ul[@ng-hide="showThumbnails"]/li/img/@src').extract()
@@ -212,6 +202,13 @@ class ZonesSpider(BaseProductsSpider):
         price = response.xpath('//span[@class="prod-price"]/text()').extract()
         if price:
             return float(price[0].replace("$", "").replace(",", ""))
+
+    def _parse_sale_price(self, response):
+        if self._parse_stock_status(response)['productstockstatus'] == 2:
+            return self._parse_price(response)
+        else:
+            sale_price = self._parse_price(response) - 25.00
+            return sale_price
 
     def _parse_retailer_key(self, response):
         retailer_key = response.xpath('//span[@id="item_no_id"]/text()').extract()
@@ -229,17 +226,10 @@ class ZonesSpider(BaseProductsSpider):
         if manufacture:
             return self.clear_text(manufacture.group(1))
 
-    def _parse_shiptostore(self, response):
-        return
-
-    @staticmethod
-    def _parse_shippingphrase(response):
-        return None
-
     def _parse_features(self, response):
         features = []
-        features_name = response.xpath('//div[@class="summaryContainer"]//td[@class="hdr"]/text()').extract()
-        features_value = response.xpath('//div[@class="summaryContainer"]//td[@class="value"]/text()').extract()
+        features_name = response.xpath('//span[@class="ppdefaultbold"]/text()').extract()
+        features_value = response.xpath('//div[@class="sumCont"]//li/text()').extract()
         features_value = clean_list(self, features_value)
 
         for f_name in features_name:
@@ -262,14 +252,28 @@ class ZonesSpider(BaseProductsSpider):
                 if totals.isdigit():
                     return int(totals)
 
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
+
     def _scrape_product_links(self, response):
         links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
                                '/a[@class="title"]/@href').extract()
+
+        if not links:
+            data = json.loads(response.body)
+            link_list = data
+            for link in link_list:
+                link = link['product_link']
+                links.append(link)
 
         for link in links:
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
+        if self.retailer_id:
+            return None
+
         meta = response.meta
         current_page = meta.get('current_page')
         if not current_page:
