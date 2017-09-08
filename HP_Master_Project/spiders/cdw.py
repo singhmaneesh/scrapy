@@ -38,24 +38,27 @@ class CdwSpider(BaseProductsSpider):
     def start_requests(self):
         for request in super(CdwSpider, self).start_requests():
             if not self.product_url:
-                request = request.replace(callback=self.parse_search)
+                request = request.replace(callback=self.parse_search, dont_filter=True)
             yield request
 
     def parse_search(self, response):
         page_title = response.xpath('//div[@class="search-pagination"]').extract()
         if page_title or self.retailer_id:
-            return self.parse(response)
+            yield self.parse(response)
 
         else:
             category_url = response.xpath('//div[@class="button-lockup -center"]/a/@href').extract()
-            c_url = urlparse.urljoin(response.url, category_url[0])
-            return Request(url=c_url, meta=response.meta, callback=self.parse_category_link)
+            for c_url in category_url:
+                link = urlparse.urljoin(response.url, c_url)
+                yield Request(url=link, meta=response.meta, callback=self.parse_category_link, dont_filter=True)
 
     def parse_category_link(self, response):
-        link = response.xpath('//div[@class="button-lockup -center"]/a/@href').extract()
-        if link:
-            link = urlparse.urljoin(response.url, link[0])
-            yield Request(url=link, meta=response.meta, dont_filter=True, callback=self.parse_category_links)
+        links = response.xpath('//div[contains(@class, "button-lockup")]'
+                               '/a/@href').extract()
+        if links:
+            for link in links:
+                href = urlparse.urljoin(response.url, link)
+                yield Request(url=href, meta=response.meta, dont_filter=True, callback=self.parse_category_links)
 
     @staticmethod
     def parse_category_links(response):
