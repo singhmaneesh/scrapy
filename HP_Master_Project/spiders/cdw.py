@@ -44,13 +44,13 @@ class CdwSpider(BaseProductsSpider):
     def parse_search(self, response):
         page_title = response.xpath('//div[@class="search-pagination"]').extract()
         if page_title or self.retailer_id:
-            yield self.parse(response)
+            return self.parse(response)
 
         else:
             category_url = response.xpath('//div[@class="button-lockup -center"]/a/@href').extract()
             for c_url in category_url:
                 link = urlparse.urljoin(response.url, c_url)
-                yield Request(url=link, meta=response.meta, callback=self.parse_category_link, dont_filter=True)
+                return Request(url=link, meta=response.meta, callback=self.parse_category_link, dont_filter=True)
 
     def parse_category_link(self, response):
         links = response.xpath('//div[contains(@class, "button-lockup")]'
