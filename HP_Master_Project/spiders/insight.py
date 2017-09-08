@@ -47,7 +47,8 @@ class InsightSpider(BaseProductsSpider):
     }
 
     HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                             "Chrome/60.0.3112.90 Safari/537.36"}
+                             "Chrome/60.0.3112.90 Safari/537.36",
+               "Content-Type": "application/json; charset=UTF-8"}
 
     TOTAL_MATCHES = None
 
@@ -63,13 +64,23 @@ class InsightSpider(BaseProductsSpider):
         for request in super(InsightSpider, self).start_requests():
             if self.product_url:
                 request = request.replace(callback=self.parse_api_check, headers=self.HEADERS)
+            if self.retailer_id:
+                request = request.replace(callback=self.parse_retailer, headers=self.HEADERS)
             yield request
 
     def parse_api_check(self, response):
         product = ProductItem()
         product['link'] = response.url
-        yield Request(url=self.PRODUCT_API, method="POST", body=self.DATA,
+        yield Request(url=self.PRODUCT_API, method="POST", body=json.dumps(self.DATA),
                       callback=self._parse_single_product, meta={'product': product})
+
+    def parse_retailer(self, response):
+        data = json.loads(response.body)
+        link_list = data
+        for link in link_list:
+            link = link['product_link']
+            url = urlparse.urljoin(response.url, link)
+            yield Request(url, callback=self.parse_api_check)
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -79,6 +90,7 @@ class InsightSpider(BaseProductsSpider):
 
         try:
             product_json = json.loads(response.body)
+            product_json = product_json['products'][0]
         except:
             return
 
@@ -167,17 +179,17 @@ class InsightSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_name(product_json):
-        name = product_json['webProduct']['description']
+        name = product_json['description']
         return name
 
     @staticmethod
     def _parse_brand(product_json):
-        brand = product_json['webProduct']['manufacturerName']
+        brand = product_json['manufacturerName']
         return brand
 
     @staticmethod
     def _parse_image(product_json):
-        image_url = product_json['webProduct']['image']['largeImage']
+        image_url = product_json['image']['largeImage']
         return image_url
 
     @staticmethod
@@ -188,7 +200,7 @@ class InsightSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_unspec(product_json):
-        unspec = product_json['webProduct']['unspscCode']
+        unspec = product_json['unspscCode']
         return unspec
 
     @staticmethod
@@ -198,17 +210,17 @@ class InsightSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_model(product_json):
-        model = product_json['products'][0]['modelName']
+        model = product_json['modelName']
         return model
 
     @staticmethod
     def _parse_manufacturer(product_json):
-        manufacturer = product_json['products'][0]['manufacturerName']
+        manufacturer = product_json['manufacturerName']
         return manufacturer
 
     @staticmethod
     def _parse_price(product_json):
-        price_list = product_json['webProduct']['prices']
+        price_list = product_json['prices']
         for single_price in price_list:
             if single_price['priceLabel'] == 'LISTPRICELABEL':
                 price = single_price['price']
@@ -220,7 +232,7 @@ class InsightSpider(BaseProductsSpider):
         return sku
 
     def _parse_retailer_key(self, product_json):
-        retailer_key = product_json['webProduct']['materialId']
+        retailer_key = product_json['materialId']
         return clean_text(self, retailer_key)
 
     def _parse_instore(self, response):
@@ -243,10 +255,10 @@ class InsightSpider(BaseProductsSpider):
     @staticmethod
     def _parse_stock_status(product_json):
         stock_value = 4
-        stock_status = product_json['webProduct']['availabilityInfos'][0]['availablityMessage']
+        stock_status = product_json['availabilityInfos'][0]['availablityMessage']
         stock_status = stock_status.lower()
 
-        discon_status = product_json['webProduct']['discontinuedStatus']
+        discon_status = product_json['discontinuedStatus']
 
         if 'outofstock' in stock_status:
             stock_value = 0
