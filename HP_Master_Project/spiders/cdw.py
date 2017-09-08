@@ -174,6 +174,8 @@ class CdwSpider(BaseProductsSpider):
             return unspec[0]
 
     def _parse_gallery(self, response):
+        if not self._parse_image(response):
+            return None
         image_list = []
         base_image_url = self._parse_image(response).replace("?$product-main$", "")
         gallery = base_image_url + '?$product_60$'
