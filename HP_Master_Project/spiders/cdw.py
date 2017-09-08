@@ -152,7 +152,7 @@ class CdwSpider(BaseProductsSpider):
         brand = response.xpath('//span[@itemprop="brand"]/text()').extract()
         if not brand:
             brand = response.xpath('//span[@class="brand"]/text()').extract()
-        return brand[0].strip()
+        return brand[0].strip() if brand else None
 
     @staticmethod
     def _parse_image(response):
