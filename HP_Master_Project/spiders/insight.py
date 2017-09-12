@@ -4,11 +4,10 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 import urlparse
 import json
-import requests
-import copy
-from scrapy import Request
+from pyvirtualdisplay import Display
+from selenium import webdriver
 
-from HP_Master_Project.utils import extract_first, clean_text
+from HP_Master_Project.utils import clean_text
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
 
@@ -17,30 +16,11 @@ class InsightSpider(BaseProductsSpider):
     name = "insight_products"
     allowed_domains = ['insight.com', 'www.insight.com']
 
-    # SEARCH_URL = 'https://www.insight.com/en_US/search.html?qtype=all&q={search_term}' \
-    #              '&pq={"pageSize":10,"currentPage":{page_num},"shownFlag":true,' \
-    #              '"priceRangeLower":0,"priceRangeUpper":0,' \
-    #              '"cmtStandards":true,"categoryId":null,"setType":null,"setId":null,"shared":null,' \
-    #              '"groupId":null,"cmtCustomerNumber":null,"groupName":null,"fromLicense":true,' \
-    #              '"licenseContractIds":null,"programIds":null,"controller":null,"fromcs":false,' \
-    #              '"searchTerms":{""{search_term}"":{"field":"searchTerm","value":"{search_term}"}}}'
-
     SEARCH_URL = 'https://www.insight.com/en_US/search.html?qtype=all&q={search_term}'
 
     API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
               '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
               '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
-
-    PRODUCT_API = 'https://www.insight.com/insightweb/getProductInfo'
-
-    HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                             "Chrome/60.0.3112.90 Safari/537.36",
-               "Content-Type": "application/json; charset=UTF-8",
-               "Accept": "application/json; charset=utf-8",
-               "X-Requested-With": "XMLHttpRequest",
-               "ADRUM": "isAjax:true",
-               "Cookie": "CORAD_GUID=337d5890-e6df-471c-8ddd-f649ece10cb4"
-               }
 
     TOTAL_MATCHES = None
 
@@ -50,82 +30,57 @@ class InsightSpider(BaseProductsSpider):
         super(InsightSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
         self.current_page = 1
-        # self.url_formatter = FormatterWithDefaults(page_num=1)
+        self.timeout = 90
+        self.width = 1024
+        self.height = 768
 
     def start_requests(self):
         for request in super(InsightSpider, self).start_requests():
-            # if self.product_url:
-            #     request = request.replace(callback=self.parse_api_check, headers=self.HEADERS)
-            # if self.retailer_id:
-            #     request = request.replace(callback=self.parse_retailer, headers=self.HEADERS)
             yield request
-
-    # def parse_api_check(self, response):
-    #     product = ProductItem()
-    #     product['link'] = response.url
-    #     yield Request(url=self.PRODUCT_API, method="POST", body=json.dumps(self.DATA),
-    #                   callback=self._parse_single_product, meta={'product': product})
-    #
-    # def parse_retailer(self, response):
-    #     data = json.loads(response.body)
-    #     link_list = data
-    #     for link in link_list:
-    #         link = link['product_link']
-    #         url = urlparse.urljoin(response.url, link)
-    #         yield Request(url, callback=self.parse_api_check)
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
 
+    def _prepare_driver(self, driver):
+        driver.set_page_load_timeout(int(self.timeout))
+        driver.set_script_timeout(int(self.timeout))
+        driver.set_window_size(int(self.width), int(self.height))
+        return driver
+
     def parse_product(self, response):
         product = response.meta['product']
-        sku = re.search('/product/(.*?)/', response.url).group(1)
 
-        data = {
-            'cartFlag': False,
-            'contractId': '',
-            'defaultPlant': '10',
-            'fromcs': False,
-            'loadAccessories': False,
-            'loadRecommendedProducts': True,
-            'locale': 'en_us',
-            'salesOrg': '2400',
-            'similarMaterialId': sku,
-            'softwareContractIds': [],
-            'user': {}
-        }
+        display = Display(visible=False)
+        display.start()
+        driver = webdriver.Firefox()
+        self._prepare_driver(driver)
 
-        data = requests.post(url=self.PRODUCT_API, data=json.dumps(data), headers=self.HEADERS).json()
-
-        try:
-            product_json = data['webProduct']
-        except:
-            return
+        driver.get(response.url)
 
         # Parse name
-        name = self._parse_name(product_json)
+        name = self._parse_name(driver)
         product['name'] = name
 
         # Parse brand
-        brand = self._parse_brand(product_json)
+        brand = self._parse_brand(driver)
         product['brand'] = brand
 
         # Parse image
-        image = self._parse_image(product_json)
+        image = self._parse_image(driver)
         product['image'] = image
 
         # Parse image
-        categories = self._parse_category(product_json)
+        categories = self._parse_category(driver)
         product['categories'] = categories
 
         product['link'] = response.url
 
         # Parse manufacturer
-        manufacturer = self._parse_manufacturer(product_json)
+        manufacturer = self._parse_manufacturer(driver)
         product['manufacturer'] = manufacturer
 
         # Parse model
-        model = self._parse_model(product_json)
+        model = self._parse_model(driver)
         product['model'] = model
 
         # Parse currencycode
@@ -134,50 +89,42 @@ class InsightSpider(BaseProductsSpider):
         # Set locale
         product['locale'] = 'en-US'
 
-        product['mpn'] = product_json['manufacturerPartNumber']
-
+        product['mpn'] = driver.find_element_by_xpath("//div[@itemprop='mpn']").text
         # Parse price
-        price = self._parse_price(product_json)
+
+        price = self._parse_price(driver)
         product['price'] = price
 
-        # Parse sale price
         product['saleprice'] = price
 
         # Parse sku
-        sku = self._parse_sku(product_json)
+        sku = self._parse_sku(driver)
         product['sku'] = sku
 
         # Parse retailer_key
-        retailer_key = self._parse_retailer_key(product_json)
+        retailer_key = self._parse_retailer_key(driver)
         product['retailer_key'] = retailer_key
 
         # Parse unspec
-        unspec = self._parse_unspec(product_json)
+        unspec = self._parse_unspec(driver)
         product['unspec'] = unspec
 
         # Parse in_store
         in_store = self._parse_instore(response)
         product['instore'] = in_store
 
-        # Parse ship to store
-        ship_to_store = self._parse_shiptostore(response)
-        product['shiptostore'] = ship_to_store
-
-        # Parse shipping phrase
-        shipping_phrase = self._parse_shippingphrase(response)
-        product['shippingphrase'] = shipping_phrase
-
         # Parse stock status
-        stock_status = self._parse_stock_status(product_json)
-        product['productstockstatus'] = stock_status
+
+        stock_info = self._parse_stock_status(driver)
+        product['productstockstatus'] = stock_info
 
         # Parse gallery
-        gallery = self._parse_gallery(response)
+        gallery = self._parse_gallery(driver)
         product['gallery'] = gallery
 
-        # Parse features
+        # # Parse features
 
-        features = self._parse_features(product_json)
+        features = self._parse_features(driver)
         product['features'] = features
 
         # Parse condition
@@ -186,157 +133,196 @@ class InsightSpider(BaseProductsSpider):
         return product
 
     @staticmethod
-    def _parse_name(product_json):
-        name = product_json['description']
+    def _parse_name(driver):
+        name = driver.find_element_by_xpath('//div[@id="js-product-detail-target"]/h1/a').text
         return name
 
     @staticmethod
-    def _parse_brand(product_json):
-        brand = product_json['manufacturerName']
+    def _parse_brand(driver):
+        brand = driver.find_element_by_xpath('//div[@itemprop="brand"]').text
         return brand
 
     @staticmethod
-    def _parse_image(product_json):
-        image_url = product_json['image']['largeImage']
+    def _parse_image(driver):
+        image_url = driver.find_element_by_xpath('//img[@itemprop="image"]').get_property("src")
         return image_url
 
     @staticmethod
-    def _parse_gallery(response):
-        gallery = response.xpath('//div[contains(@id, "productImageBrowser")]'
-                                 '//img[@class="img-responsive"]/@src').extract()
-        return gallery
+    def _parse_gallery(driver):
+        gallery_list = []
+        gallerys = driver.find_elements_by_xpath('//li[contains(@class, "ccs-ds-zoomGallery-thumbs-inactive")]/img')
+        for gallery in gallerys:
+            gallery_list.append(gallery.get_property("src"))
+        return gallery_list
 
     @staticmethod
-    def _parse_unspec(product_json):
-        unspec = product_json['unspscCode']
-        return unspec
+    def _parse_unspec(driver):
+        unspec_list = driver.find_elements_by_xpath('//div[contains(@class, "prod-description")]'
+                                                    '//table[contains(@class, "product-specs")]//td')
+        for unspec in unspec_list:
+            if 'UNSPSC' in unspec.text:
+                unspec = re.search('UNSPSC: (\d+)', unspec.text).group(1)
+                return unspec
 
     @staticmethod
-    def _parse_category(product_json):
-        categories = product_json['categoryLabel']
-        return categories
+    def _parse_category(driver):
+        category_list = []
+        categories = driver.find_elements_by_xpath('//div[contains(@id, "breadcrumb")]'
+                                                   '//li[@itemprop="itemListElement"]'
+                                                   '//span[@itemprop="name"]')
+        for category in categories:
+            category_list.append(category.text)
+        return category_list
 
     @staticmethod
-    def _parse_model(product_json):
-        model = product_json['modelName']
+    def _parse_model(driver):
+        model = driver.find_element_by_xpath('//div[@itemprop="model"]').text
         return model
 
     @staticmethod
-    def _parse_manufacturer(product_json):
-        manufacturer = product_json['manufacturerName']
-        return manufacturer
+    def _parse_manufacturer(driver):
+        manufacturer_list = driver.find_elements_by_xpath('//div[contains(@class, "prod-description")]'
+                                                          '//table[contains(@class, "product-specs")]//td')
+        for manufacturer in manufacturer_list:
+            if 'Mfr' in manufacturer.text:
+                manufacturer = re.search('Mfr. # (.*)', manufacturer.text).group(1)
+                return manufacturer
 
     @staticmethod
-    def _parse_price(product_json):
-        price_list = product_json['prices']
+    def _parse_price(driver):
+        price_list = driver.find_elements_by_xpath('//p[@class="prod-price"]')
         for single_price in price_list:
-            if single_price['priceLabel'] == 'LISTPRICELABEL':
-                price = single_price['price']
+            if single_price.text:
+                price = re.search('USD (.*)', single_price.text).group(1)
+                price = float(price.replace(',', '').replace('$', ''))
                 return price
 
     @staticmethod
-    def _parse_sku(product_json):
-        sku = product_json['materialId']
-        return sku
+    def _parse_sku(driver):
+        sku_list = driver.find_elements_by_xpath('//div[contains(@class, "prod-description")]'
+                                                 '//table[contains(@class, "product-specs")]//td')
+        for sku in sku_list:
+            if 'Mfr' in sku.text:
+                sku = re.search('Mfr. # (.*)', sku.text).group(1)
+                return sku
 
-    def _parse_retailer_key(self, product_json):
-        retailer_key = product_json['materialId']
-        return clean_text(self, retailer_key)
+    def _parse_retailer_key(self, driver):
+        retailer_key_list = driver.find_elements_by_xpath('//div[contains(@class, "prod-description")]'
+                                                          '//table[contains(@class, "product-specs")]//td')
+        for retailer_key in retailer_key_list:
+            if 'Mfr' in retailer_key.text:
+                retailer_key = re.search('Mfr. # (.*)', retailer_key.text).group(1)
+                return clean_text(self, retailer_key)
 
-    def _parse_instore(self, response):
-        if self._parse_price(response):
-            return 1
-
-        return 0
-
-    def _parse_shiptostore(self, response):
-        if self._parse_shippingphrase(response):
+    def _parse_instore(self, driver):
+        if self._parse_price(driver):
             return 1
 
         return 0
 
     @staticmethod
-    def _parse_shippingphrase(response):
-        shipping_phrase = extract_first(response.xpath('//span[@id="productEstimatedShipping"]/text()'))
-        return shipping_phrase
-
-    @staticmethod
-    def _parse_stock_status(product_json):
+    def _parse_stock_status(driver):
         stock_value = 4
-        stock_status = product_json['availabilityInfos'][0]['availablityMessage']
-        stock_status = stock_status.lower()
-
-        discon_status = product_json['discontinuedStatus']
-
-        if 'outofstock' in stock_status:
-            stock_value = 0
-
-        if 'instock' in stock_status:
+        stock_status = driver.find_element_by_xpath('//p[@class="prod-stock"]').text
+        if 'in stock' in stock_status.lower():
             stock_value = 1
-
-        if 'call for availability' in stock_status:
+        if 'out of stock' in stock_status.lower():
+            stock_value = 0
+        if 'call for availability' in stock_status.lower():
             stock_value = 2
-
-        if discon_status:
+        if 'discontinued' in stock_status.lower():
             stock_value = 3
-
         return stock_value
 
     @staticmethod
-    def _parse_features(product_json):
+    def _parse_features(driver):
         features = []
-        feature_content = product_json['extendedSpecsMap']
-        for feat in feature_content:
-            feature = {feat['details']['label']: feat['details']['value']}
+        features_name = driver.find_elements_by_xpath('//div[contains(@id, "specification-")]'
+                                                      '/div//tr/td[@scope="row"]')
+        features_value = driver.find_elements_by_xpath('//div[contains(@id, "specification-")]'
+                                                       '/div//tr/td[not(contains(@scope,"row"))]')
+
+        for f_name in features_name:
+            index = features_name.index(f_name)
+            feature = {f_name.text: features_value[index].text}
             features.append(feature)
 
         return features
 
     def _scrape_total_matches(self, response):
-        totals = re.search('of (\d+) Results', response.body)
-        if totals:
-            totals = totals.group(1).replace(',', '').replace('.', '').strip()
-            if totals.isdigit():
-                if not self.TOTAL_MATCHES:
-                    self.TOTAL_MATCHES = int(totals)
-                return int(totals)
         if self.retailer_id:
             data = json.loads(response.body)
             return len(data)
 
+        display = Display(visible=False)
+        display.start()
+        driver1 = webdriver.Firefox()
+        self._prepare_driver(driver1)
+
+        driver1.get(response.url)
+
+        totals = driver1.find_element_by_xpath('//a[@data-label="Products"]').get_property("data-count")
+        if totals:
+            totals = totals.replace(',', '').replace('.', '').strip()
+            if totals.isdigit():
+                if not self.TOTAL_MATCHES:
+                    self.TOTAL_MATCHES = int(totals)
+                return int(totals)
+
     def _scrape_results_per_page(self, response):
         if self.retailer_id:
             return None
-        result_per_page = re.search('1 - (\d+) of', response.body)
+        display = Display(visible=False)
+        display.start()
+        driver2 = webdriver.Firefox()
+        self._prepare_driver(driver2)
+
+        driver2.get(response.url)
+
+        result_per_page = driver2.find_element_by_xpath("//a[@id='buy-search-pagesize-button']")\
+            .get_property("data-selected")
         if result_per_page:
-            result_per_page = result_per_page.group(1).replace(',', '').replace('.', '').strip()
+            result_per_page = result_per_page.group.replace(',', '').replace('.', '').strip()
             if result_per_page.isdigit():
                 if not self.RESULT_PER_PAGE:
                     self.RESULT_PER_PAGE = int(result_per_page)
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
-
-        if not links:
+        link_list = []
+        if self.retailer_id:
             data = json.loads(response.body)
-            link_list = data
-            for link in link_list:
-                link = link['product_link']
-                links.append(link)
-        if links:
+            links = data
             for link in links:
-                url = urlparse.urljoin(response.url, link)
-                yield url, ProductItem()
+                link = link['product_link']
+                link_list.append(link)
+        else:
+            display = Display(visible=False)
+            display.start()
+            driver3 = webdriver.Firefox()
+            self._prepare_driver(driver3)
+
+            driver3.get(response.url)
+            links = driver3.find_elements_by_xpath('//div[@id="js-search-product-items"]'
+                                                  '/div[@itemprop="itemListElement"]/a[@class="select-prod"]')
+            if links:
+                for link in links:
+                    link = link.get_property("href")
+                    link_list.append(link)
+
+        for link in link_list:
+            url = urlparse.urljoin(response.url, link)
+            yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
             return None
-        page_count = self.TOTAL_MATCHES / self.RESULT_PER_PAGE + 1
+        display = Display(visible=False)
+        display.start()
+        driver4 = webdriver.Firefox()
+        self._prepare_driver(driver4)
 
-        self.current_page += 1
+        driver4.get(response.url)
 
-        if self.current_page <= page_count:
-            next_page = self.SEARCH_URL.format(page_num=self.current_page,
-                                               search_term=response.meta['search_term'])
-            return next_page
+        next_page = driver4.find_element_by_xpath('//div[@class="stickyPagination"]/a').click()
+        return next_page
