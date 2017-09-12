@@ -5,6 +5,7 @@ import re
 import urlparse
 import json
 import requests
+import copy
 from scrapy import Request
 
 from HP_Master_Project.utils import extract_first, clean_text
@@ -31,24 +32,15 @@ class InsightSpider(BaseProductsSpider):
               '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
     PRODUCT_API = 'https://www.insight.com/insightweb/getProductInfo'
-    DATA = {
-        'cartFlag': 'false',
-        'contractId': '',
-        'defaultPlant': '10',
-        'fromcs': 'false',
-        'loadAccessories': 'false',
-        'loadRecommendedProducts': 'true',
-        'locale': 'en_us',
-        'salesOrg': '2400',
-        'searchText': ['G6U79AA'],
-        'similarMaterialId': 'G6U79AA',
-        'softwareContractIds': [],
-        'user': {}
-    }
 
     HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                              "Chrome/60.0.3112.90 Safari/537.36",
-               "Content-Type": "application/json; charset=UTF-8"}
+               "Content-Type": "application/json; charset=UTF-8",
+               "Accept": "application/json; charset=utf-8",
+               "X-Requested-With": "XMLHttpRequest",
+               "ADRUM": "isAjax:true",
+               "Cookie": "CORAD_GUID=337d5890-e6df-471c-8ddd-f649ece10cb4"
+               }
 
     TOTAL_MATCHES = None
 
@@ -62,35 +54,51 @@ class InsightSpider(BaseProductsSpider):
 
     def start_requests(self):
         for request in super(InsightSpider, self).start_requests():
-            if self.product_url:
-                request = request.replace(callback=self.parse_api_check, headers=self.HEADERS)
-            if self.retailer_id:
-                request = request.replace(callback=self.parse_retailer, headers=self.HEADERS)
+            # if self.product_url:
+            #     request = request.replace(callback=self.parse_api_check, headers=self.HEADERS)
+            # if self.retailer_id:
+            #     request = request.replace(callback=self.parse_retailer, headers=self.HEADERS)
             yield request
 
-    def parse_api_check(self, response):
-        product = ProductItem()
-        product['link'] = response.url
-        yield Request(url=self.PRODUCT_API, method="POST", body=json.dumps(self.DATA),
-                      callback=self._parse_single_product, meta={'product': product})
-
-    def parse_retailer(self, response):
-        data = json.loads(response.body)
-        link_list = data
-        for link in link_list:
-            link = link['product_link']
-            url = urlparse.urljoin(response.url, link)
-            yield Request(url, callback=self.parse_api_check)
+    # def parse_api_check(self, response):
+    #     product = ProductItem()
+    #     product['link'] = response.url
+    #     yield Request(url=self.PRODUCT_API, method="POST", body=json.dumps(self.DATA),
+    #                   callback=self._parse_single_product, meta={'product': product})
+    #
+    # def parse_retailer(self, response):
+    #     data = json.loads(response.body)
+    #     link_list = data
+    #     for link in link_list:
+    #         link = link['product_link']
+    #         url = urlparse.urljoin(response.url, link)
+    #         yield Request(url, callback=self.parse_api_check)
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
 
     def parse_product(self, response):
         product = response.meta['product']
+        sku = re.search('/product/(.*?)/', response.url).group(1)
+
+        data = {
+            'cartFlag': False,
+            'contractId': '',
+            'defaultPlant': '10',
+            'fromcs': False,
+            'loadAccessories': False,
+            'loadRecommendedProducts': True,
+            'locale': 'en_us',
+            'salesOrg': '2400',
+            'similarMaterialId': sku,
+            'softwareContractIds': [],
+            'user': {}
+        }
+
+        data = requests.post(url=self.PRODUCT_API, data=json.dumps(data), headers=self.HEADERS).json()
 
         try:
-            product_json = json.loads(response.body)
-            product_json = product_json['products'][0]
+            product_json = data['webProduct']
         except:
             return
 
@@ -126,7 +134,7 @@ class InsightSpider(BaseProductsSpider):
         # Set locale
         product['locale'] = 'en-US'
 
-        product['mpn'] = product_json['webProduct']['manufacturerPartNumber']
+        product['mpn'] = product_json['manufacturerPartNumber']
 
         # Parse price
         price = self._parse_price(product_json)
@@ -205,7 +213,7 @@ class InsightSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_category(product_json):
-        categories = product_json['webProduct']['categoryLabel']
+        categories = product_json['categoryLabel']
         return categories
 
     @staticmethod
@@ -228,7 +236,7 @@ class InsightSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_sku(product_json):
-        sku = product_json['webProduct']['materialId']
+        sku = product_json['materialId']
         return sku
 
     def _parse_retailer_key(self, product_json):
@@ -277,7 +285,7 @@ class InsightSpider(BaseProductsSpider):
     @staticmethod
     def _parse_features(product_json):
         features = []
-        feature_content = product_json['webProduct']['extendedSpecsMap']
+        feature_content = product_json['extendedSpecsMap']
         for feat in feature_content:
             feature = {feat['details']['label']: feat['details']['value']}
             features.append(feature)
@@ -316,10 +324,10 @@ class InsightSpider(BaseProductsSpider):
             for link in link_list:
                 link = link['product_link']
                 links.append(link)
-
-        for link in links:
-            url = urlparse.urljoin(response.url, link)
-            yield url, ProductItem()
+        if links:
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
