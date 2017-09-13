@@ -52,6 +52,32 @@ class CSVPipeline(object):
                                               'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
                                               'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
                                               'gallery', 'features', 'condition']
+        if spider.name == 'cdw_products':
+            result_cdw = open('crawler cdw.csv', 'w+b')
+            self.files[spider] = result_cdw
+            self.exporter = CsvItemExporter(result_cdw)
+            self.exporter.fields_to_export = ['name', 'brand', 'image', 'link', 'model', 'upc', 'ean', 'currencycode',
+                                              'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
+                                              'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
+                                              'gallery', 'features', 'condition']
+
+        if spider.name == 'officedepot_products':
+            result_officedepot = open('crawler officedepot.csv', 'w+b')
+            self.files[spider] = result_officedepot
+            self.exporter = CsvItemExporter(result_officedepot)
+            self.exporter.fields_to_export = ['name', 'brand', 'image', 'link', 'model', 'upc', 'ean', 'currencycode',
+                                              'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
+                                              'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
+                                              'gallery', 'features', 'condition']
+
+        if spider.name == 'hp_products':
+            result_hp = open('crawler hp.csv', 'w+b')
+            self.files[spider] = result_hp
+            self.exporter = CsvItemExporter(result_hp)
+            self.exporter.fields_to_export = ['name', 'brand', 'image', 'link', 'model', 'upc', 'ean', 'currencycode',
+                                              'locale', 'price', 'saleprice', 'sku', 'retailer_key', 'instore',
+                                              'shiptostore', 'shippingphrase', 'productstockstatus', 'categories',
+                                              'gallery', 'features', 'condition']
 
         self.exporter.start_exporting()
 

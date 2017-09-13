@@ -2,10 +2,8 @@ from __future__ import division, absolute_import, unicode_literals
 
 import json
 import re
-import time
 import socket
 import urlparse
-import os
 import string
 
 from HP_Master_Project.utils import clean_list
@@ -20,14 +18,17 @@ from HP_Master_Project.utils import is_empty
 
 class OfficedepotProductsSpider(BaseProductsSpider):
     name = 'officedepot_products'
-    allowed_domains = ["officedepot.com", "www.officedepot.com", 'bazaarvoice.com']
+    allowed_domains = ["officedepot.com", "www.officedepot.com", 'bazaarvoice.com', "store.hp.com"]
     start_urls = []
 
     SEARCH_URL = "http://www.officedepot.com/catalog/search.do?Ntt={search_term}&searchSuggestion=true&akamai-feo=off"
 
-    PAGINATE_URL = ('http://www.officedepot.com/catalog/search.do?Ntx=mode+matchpartialmax&Nty=1&Ntk=all'
-                    '&Ntt={search_term}&N=5&recordsPerPageNumber=24&No={nao}'
-                    )
+    API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
+              '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
+
+    PAGINATE_URL = 'http://www.officedepot.com/catalog/search.do?Ntx=mode+matchpartialmax&Nty=1&Ntk=all' \
+                   '&Ntt={search_term}&N=5&recordsPerPageNumber=24&No={nao}'
 
     CURRENT_NAO = 0
     PAGINATE_BY = 24  # 24 products
@@ -254,6 +255,9 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             categories_links.append(link)
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = response.xpath('//div[contains(@id, "resultCnt")]/text()').extract()
         if totals:
             totals = totals[0].replace(',', '').replace('.', '').strip()
@@ -264,7 +268,6 @@ class OfficedepotProductsSpider(BaseProductsSpider):
 
     def _get_products(self, response):
         if "officedepot.com/a/products" in response.url:
-            # We got redirected to single-product page instead search results page
             prod = ProductItem(search_redirected_to_product=True)
             yield prod
         else:
@@ -272,10 +275,20 @@ class OfficedepotProductsSpider(BaseProductsSpider):
                 yield req_or_prod
 
     def _scrape_product_links(self, response):
-        items = response.xpath(
-            '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
-        ).extract() or response.css('.desc_text a::attr("href")').extract()
-        for link in items:
+        links = []
+        if self.retailer_id:
+            data = json.loads(response.body)
+            link_list = data
+            for link in link_list:
+                link = link['product_link']
+                if 'officedepot' in link:
+                    links.append(link)
+        else:
+            links = response.xpath(
+                '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
+            ).extract() or response.css('.desc_text a::attr("href")').extract()
+
+        for link in links:
             yield link, ProductItem()
 
     def _get_nao(self, url):
@@ -292,6 +305,8 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             return url+'&nao='+str(new_nao)
 
     def _scrape_next_results_page_link(self, response):
+        if self.retailer_id:
+            return
         if self.TOTAL_MATCHES is None:
             self.log('No "next result page" link!')
             return
@@ -302,10 +317,11 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         if '/a/browse/' in response.url:    # paginate in category or subcategory
             new_paginate_url = self.parse_paginate_link(response, self.CURRENT_NAO)
             if new_paginate_url:
-                return Request(new_paginate_url, callback=self.parse, meta=response.meta)
+                return Request(new_paginate_url, callback=self.parse, meta=response.meta, dont_filter=True)
         return Request(
             self.PAGINATE_URL.format(
                 search_term=response.meta['search_term'],
                 nao=str(self.CURRENT_NAO)),
-            callback=self.parse, meta=response.meta
+            callback=self.parse, meta=response.meta,
+            dont_filter=True
         )
