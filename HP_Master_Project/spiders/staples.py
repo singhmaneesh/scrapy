@@ -26,6 +26,8 @@ class StaplesSpider(BaseProductsSpider):
               '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
               '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
+    LoadMore = 'https://www.staples.com/search/loadMore'
+
     CURRENT_NAO = 1
     PAGINATE_BY = 18  # 18 products
     TOTAL_MATCHES = None  # for pagination
@@ -67,12 +69,18 @@ class StaplesSpider(BaseProductsSpider):
         else:
             return self.parse(response)
 
-    @staticmethod
-    def parse_category_links(response):
-        links = response.xpath('//div[contains(@class, "z_padding_")]'
-                               '/a[contains(@class, "z_ctablue")]/@href').extract()
+    def parse_category_links(self, response):
+        links = response.xpath('//div[@id="z_wrapper"]//ul[@class="z_main_nav"]'
+                               '/li/a/@href').extract()
+        links = links[1:][:-1]
         for link in links:
-            yield Request(url=link, meta=response.meta)
+            yield Request(url=link, meta=response.meta, callback=self.parse_single_links)
+
+    @staticmethod
+    def parse_single_links(response):
+        links = response.xpath('//div[contains(@class, "z_category")]/a[@class="z_cta"]/@href').extract()
+        for link in links:
+            yield Request(url=link, meta=response.meta, dont_filter=True)
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
