@@ -351,7 +351,7 @@ class StaplesSpider(BaseProductsSpider):
         if not links:
             links = response.xpath('//a[@class="product-title scTrack pfm"]/@href').extract()
 
-        if not links:
+        if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:
