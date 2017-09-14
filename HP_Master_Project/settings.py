@@ -17,6 +17,11 @@ SPIDER_MODULES = ['HP_Master_Project.spiders']
 NEWSPIDER_MODULE = 'HP_Master_Project.spiders'
 ITEM_PIPLINES = {'HP_Master_Project.CSVPipeline': 300}
 
+SPIDER_MIDDLEWARES = {
+    'scrapy_deltafetch.DeltaFetch': 100,
+}
+
+DELTAFETCH_ENABLED = True
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'HP_Master_Project (+http://www.yourdomain.com)'

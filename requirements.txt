@@ -42,3 +42,5 @@ boto
 pyvirtualdisplay
 selenium
 xvfbwrapper
+bsddb3
+scrapy-deltafetch
