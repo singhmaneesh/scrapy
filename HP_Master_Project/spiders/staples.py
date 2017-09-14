@@ -22,7 +22,9 @@ class StaplesSpider(BaseProductsSpider):
 
     PAGINATE_URL = "http://www.staples.com/{search_term}/directory_{search_term}?sby=0&pn={nao}"
 
-    LoadMore = "https://www.staples.com/search/loadMore"
+    API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
+              '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
     CURRENT_NAO = 1
     PAGINATE_BY = 18  # 18 products
@@ -314,13 +316,23 @@ class StaplesSpider(BaseProductsSpider):
                 return
 
     def _scrape_total_matches(self, response):
-        totals = response.xpath('//input[contains(@id, "allProductsTabCount")]/@value').extract()
-        if totals:
-            totals = totals[0].replace(',', '').replace('.', '').strip()
-            if totals.isdigit():
-                if not self.TOTAL_MATCHES:
-                    self.TOTAL_MATCHES = int(totals)
-                return int(totals)
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
+
+        try:
+            totals = response.xpath('//input[contains(@id, "allProductsTabCount")]/@value')[0].extract()
+            if not int(totals):
+                totals = response.xpath('//span[@class="results-number"]/text()').re('(\d+)')[0]
+            if totals:
+                totals = totals.replace(',', '').replace('.', '').strip()
+                if totals.isdigit():
+                    if not self.TOTAL_MATCHES:
+                        self.TOTAL_MATCHES = int(totals)
+                    return int(totals)
+        except:
+            self.log("Found no total matches {}".format(traceback.format_exc()))
+            return 0
 
     def _scrape_product_links(self, response):
         links = response.xpath('//a[contains(@property, "url")]/@href').extract()
@@ -331,12 +343,21 @@ class StaplesSpider(BaseProductsSpider):
         if not links:
             links = response.xpath('//a[@class="product-title scTrack pfm"]/@href').extract()
 
+        if not links:
+            data = json.loads(response.body)
+            link_list = data
+            for link in link_list:
+                link = link['product_link']
+                links.append(link)
+
         links = [urlparse.urljoin(response.url, x) for x in links]
 
         for link in links:
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
+        if self.retailer_id:
+            return None
         meta = response.meta
         current_page = meta.get('current_page')
         if not current_page:

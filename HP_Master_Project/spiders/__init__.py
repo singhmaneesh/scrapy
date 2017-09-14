@@ -270,6 +270,15 @@ class BaseProductsSpider(Spider):
 
     def start_requests(self):
         """Generate Requests from the SEARCH_URL and the search terms."""
+        if self.retailer_id:
+            yield Request(
+                self.url_formatter.format(
+                    self.API_URL,
+                    retailer_id=self.retailer_id,
+                ),
+                meta={'search_term': '', 'remaining': self.quantity}
+            )
+
         for st in self.searchterms:
             yield Request(
                 self.url_formatter.format(
@@ -277,15 +286,6 @@ class BaseProductsSpider(Spider):
                     search_term=urllib.quote_plus(st.encode('utf-8')),
                 ),
                 meta={'search_term': st, 'remaining': self.quantity},
-            )
-
-        if self.retailer_id:
-            yield Request(
-                self.url_formatter.format(
-                    self.API_URL,
-                    retailer_id=int(self.retailer_id),
-                ),
-                meta={'search_term': '', 'remaining': self.quantity}
             )
 
         if self.product_url:
