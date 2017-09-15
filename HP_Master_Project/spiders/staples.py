@@ -76,12 +76,13 @@ class StaplesSpider(BaseProductsSpider):
                                '/li/a/@href').extract()
         links = links[1:][:-1]
         for link in links:
-            yield Request(url=link, meta=response.meta, callback=self.parse_single_links, dont_filter=True)
+            yield Request(url=link, meta=response.meta, dont_filter=True, callback=self.parse_single_links)
 
     @staticmethod
     def parse_single_links(response):
-        links = response.xpath('//div[contains(@class, "z_category")]/a[@class="z_cta"]/@href').extract()
+        links = response.xpath('//div[contains(@class, "z_category")]//a[@class="z_cta"]/@href').extract()
         for link in links:
+            link = urlparse.urljoin(response.url, link)
             yield Request(url=link, meta=response.meta, dont_filter=True)
 
     def _parse_single_product(self, response):
@@ -328,11 +329,16 @@ class StaplesSpider(BaseProductsSpider):
             return len(data)
 
         try:
-            totals = response.xpath('//input[contains(@id, "allProductsTabCount")]/@value')[0].extract()
+            totals = response.xpath('//input[contains(@id, "allProductsTabCount")]/@value').extract()
+            totals = totals[0] if totals else 0
+
             if not int(totals):
-                totals = response.xpath('//span[@class="count"]/text()')[0].re('(\d+)')[0]
+                totals = response.xpath('//span[@class="count"]/text()')
+                totals = totals[0] if totals else 0
+                totals = totals.re('(\d+)')[0]
             if not int(totals):
-                totals = response.xpath('//span[@class="results-number"]/text()').re('(\d+)')[0]
+                totals = response.xpath('//span[@class="results-number"]/text()')
+                totals = totals.re('(\d+)')[0] if totals else 0
             if totals:
                 totals = totals.replace(',', '').replace('.', '').strip()
                 if totals.isdigit():
