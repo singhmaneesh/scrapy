@@ -1,7 +1,7 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-from scrapy import Request
+from scrapy import Request, FormRequest
 from scrapy.log import WARNING
 import urlparse
 import json
@@ -54,6 +54,8 @@ class StaplesSpider(BaseProductsSpider):
         for request in super(StaplesSpider, self).start_requests():
             if not self.product_url:
                 request = request.replace(callback=self.parse_search)
+            if self.retailer_id:
+                request = request.replace(callback=self.parse)
             yield request
 
     def parse_search(self, response):
@@ -74,7 +76,7 @@ class StaplesSpider(BaseProductsSpider):
                                '/li/a/@href').extract()
         links = links[1:][:-1]
         for link in links:
-            yield Request(url=link, meta=response.meta, callback=self.parse_single_links)
+            yield Request(url=link, meta=response.meta, callback=self.parse_single_links, dont_filter=True)
 
     @staticmethod
     def parse_single_links(response):
@@ -113,9 +115,6 @@ class StaplesSpider(BaseProductsSpider):
         # Parse upc
         upc = self._parse_upc(response)
         product['upc'] = upc
-
-        # Parse ean
-        product['ean'] = None
 
         # Parse currencycode
         product['currencycode'] = 'USD'
@@ -331,6 +330,8 @@ class StaplesSpider(BaseProductsSpider):
         try:
             totals = response.xpath('//input[contains(@id, "allProductsTabCount")]/@value')[0].extract()
             if not int(totals):
+                totals = response.xpath('//span[@class="count"]/text()')[0].re('(\d+)')[0]
+            if not int(totals):
                 totals = response.xpath('//span[@class="results-number"]/text()').re('(\d+)')[0]
             if totals:
                 totals = totals.replace(',', '').replace('.', '').strip()
@@ -380,7 +381,7 @@ class StaplesSpider(BaseProductsSpider):
 
         if not self.is_category:
             url = self.PAGINATE_URL.format(search_term=meta['search_term'],
-                                           nao=str(current_page))
+                                           nao=str(current_page), dont_filter=True)
         else:
             split_url = response.url.split('?')
             next_link = split_url[0]
