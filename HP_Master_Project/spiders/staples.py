@@ -80,7 +80,10 @@ class StaplesSpider(BaseProductsSpider):
 
     @staticmethod
     def parse_single_links(response):
-        links = response.xpath('//div[contains(@class, "z_category")]//a[@class="z_cta"]/@href').extract()
+        links = response.xpath('//div[contains(@class, "z_category")]/a[@class="z_cta"]/@href').extract()
+        if not links:
+            links = response.xpath('//div[contains(@class, "z_category")]/div[@class="z_half"]'
+                                   '/a[@class="z_cta"]/@href').extract()
         for link in links:
             link = urlparse.urljoin(response.url, link)
             yield Request(url=link, meta=response.meta, dont_filter=True)
