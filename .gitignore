@@ -100,3 +100,5 @@ ENV/
 
 #idea
 .idea
+*.csv
+*.csv

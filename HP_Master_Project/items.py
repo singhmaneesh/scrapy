@@ -10,6 +10,14 @@ import scrapy
 
 class ProductItem(scrapy.Item):
     # define the fields for your item here like:
+    site = scrapy.Field()
+    search_term = scrapy.Field()
+    ranking = scrapy.Field()
+    total_matches = scrapy.Field()
+    results_per_page = scrapy.Field()
+    scraped_results_per_page = scrapy.Field()
+    is_single_result = scrapy.Field()
+
     name = scrapy.Field()   # String
     brand = scrapy.Field()  # String
     image = scrapy.Field()  # String
@@ -20,6 +28,7 @@ class ProductItem(scrapy.Item):
     unspsc = scrapy.Field()
     currencycode = scrapy.Field()   # String
     locale = scrapy.Field()     # String
+    unspec = scrapy.Field()
     price = scrapy.Field()  # Float
     saleprice = scrapy.Field()  # Float
     sku = scrapy.Field()    # String
@@ -34,6 +43,7 @@ class ProductItem(scrapy.Item):
     condition = scrapy.Field()  # Integer (New=1, Refurbished=2, Used=3, Damaged=4)
     publisher = scrapy.Field()  # String
     manufacturer = scrapy.Field()   # String
+    mpn = scrapy.Field() # String - Manufacturer Part Number
 
 
 

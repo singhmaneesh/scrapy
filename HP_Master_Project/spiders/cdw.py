@@ -4,34 +4,70 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 import urlparse
 import json
-
+import requests
+import string
+from scrapy import Request
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
-from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.spiders import BaseProductsSpider, FormatterWithDefaults
 
 
-class ConnectionSpider(BaseProductsSpider):
-    name = "connection_products"
-    allowed_domains = ['connection.com', 'www.connection.com']
+class CdwSpider(BaseProductsSpider):
+    name = "cdw_products"
+    allowed_domains = ['cdw.com', 'www.cdw.com']
 
-    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821'
+    SEARCH_URL = 'https://www.cdw.com/shop/search/result.aspx?key={search_term}&ctlgfilter=' \
+                 '&searchscope=all&sr=1&pCurrent={page_num}&pPage=1'
 
     API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
               '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
               '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
-
-    Paginate_URL = 'https://www.connection.com/product/searchpage?ManufId=4293851212+4293836821&Sort=Availability' \
-                   '&pageNumber={page_num}&pageSize={result_per_page}&' \
-                   'url=https://www.connection.com/IPA/Shop/Product/Search&mode=List'
 
     TOTAL_MATCHES = None
 
     RESULT_PER_PAGE = None
 
     def __init__(self, *args, **kwargs):
-        super(ConnectionSpider, self).__init__(
+        super(CdwSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
         self.current_page = 1
+        self.user_agent = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                           "Chrome/60.0.3112.90 Safari/537.36")
+        self.url_formatter = FormatterWithDefaults(page_num=1)
+
+    def start_requests(self):
+        for request in super(CdwSpider, self).start_requests():
+            if not self.product_url:
+                request = request.replace(callback=self.parse_search, dont_filter=True)
+            yield request
+
+    def parse_search(self, response):
+        page_title = response.xpath('//div[@class="search-pagination"]').extract()
+        if page_title or self.retailer_id:
+            return self.parse(response)
+
+        else:
+            category_url = response.xpath('//div[@class="button-lockup -center"]/a/@href').extract()
+            for c_url in category_url:
+                link = urlparse.urljoin(response.url, c_url)
+                return Request(url=link, meta=response.meta, callback=self.parse_category_link, dont_filter=True)
+
+    def parse_category_link(self, response):
+        links = response.xpath('//div[contains(@class, "button-lockup")]'
+                               '/a/@href').extract()
+        if links:
+            for link in links:
+                href = urlparse.urljoin(response.url, link)
+                yield Request(url=href, meta=response.meta, dont_filter=True, callback=self.parse_category_links)
+
+    @staticmethod
+    def parse_category_links(response):
+        link = response.xpath('//div[contains(@class, "multi-button")]/div[@class="dropdown"]'
+                              '/a/@href').extract()
+        for l in link:
+            if 'shop' in l:
+                l = urlparse.urljoin(response.url, l)
+                yield Request(url=l, meta=response.meta, dont_filter=True)
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -57,6 +93,14 @@ class ConnectionSpider(BaseProductsSpider):
         model = self._parse_model(response)
         product['model'] = model
 
+        # Parse categories
+        categories = self._parse_categories(response)
+        product['categories'] = categories
+
+        # Parse unspec
+        unspec = self._parse_unspec(response)
+        product['unspec'] = unspec
+
         # Parse currencycode
         product['currencycode'] = 'USD'
 
@@ -69,14 +113,6 @@ class ConnectionSpider(BaseProductsSpider):
 
         # Parse sale price
         product['saleprice'] = price
-
-        # Parse sku
-        sku = self._parse_sku(response)
-        product['sku'] = sku
-
-        # Parse retailer_key
-        retailer_key = self._parse_retailer_key(response)
-        product['retailer_key'] = retailer_key
 
         # Parse in_store
         in_store = self._parse_instore(response)
@@ -110,25 +146,54 @@ class ConnectionSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_name(response):
-        name = extract_first(response.xpath('//h1[@class="pagetitle"]/text()'))
-        return name
+        name = response.xpath('//h1[@id="primaryProductName"]/span[@itemprop="name"]/text()').extract()
+        if name:
+            return name[0]
 
-    def _parse_brand(self, response):
-        brand = response.xpath('//span[@itemprop="brand"]/text()')
-        if brand:
-            return extract_first(brand)
-        return 'HP'
+    @staticmethod
+    def _parse_brand(response):
+        brand = response.xpath('//span[@itemprop="brand"]/text()').extract()
+        if not brand:
+            brand = response.xpath('//span[@class="brand"]/text()').extract()
+        return brand[0].strip() if brand else None
 
     @staticmethod
     def _parse_image(response):
-        image_url = extract_first(response.xpath('//a[@item-prop="image"]/@href'))
-        return image_url
+        image_url = response.xpath('//div[@class="main-image"]/img[@itemprop="image"]'
+                                   '/@data-blzsrc').extract()
+        if image_url:
+            image_url = 'https:' + image_url[0]
+            return image_url
 
     @staticmethod
-    def _parse_gallery(response):
-        gallery = response.xpath('//div[contains(@id, "productImageBrowser")]'
-                                 '//img[@class="img-responsive"]/@src').extract()
-        return gallery
+    def _parse_categories(response):
+        categories = response.xpath('//div[@class="breadCrumbs"]//a[@itemprop="item"]/@title').extract()
+        return categories
+
+    @staticmethod
+    def _parse_unspec(response):
+        unspec = response.xpath('//span[@itemprop="gtin8"]/text()').extract()
+        if unspec:
+            return unspec[0]
+
+    def _parse_gallery(self, response):
+        if not self._parse_image(response):
+            return None
+        image_list = []
+        base_image_url = self._parse_image(response).replace("?$product-main$", "")
+        gallery = base_image_url + '?$product_60$'
+        image_list.append(gallery)
+        alpha_num = string.ascii_lowercase
+
+        for i in range(20):
+            image_url = base_image_url + alpha_num[i] + '?$product_60$'
+            res = requests.get(image_url, timeout=10)
+
+            if len(res.content) == 933:
+                break
+            image_list.append(image_url)
+
+        return image_list
 
     def _parse_model(self, response):
         model = extract_first(response.xpath('//span[@itemprop="mpn"]/text()'))
@@ -136,18 +201,9 @@ class ConnectionSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_price(response):
-        price = extract_first(response.xpath('//span[@class="product-price"]'
-                                             '/span[@class="priceDisplay"]/text()'))
+        price = response.xpath('//span[@itemprop="price"]/text()').extract()
         if price:
-            return float(price.replace("$", "").replace(",", ""))
-
-    def _parse_sku(self, response):
-        sku = extract_first(response.xpath('//span[@itemprop="sku"]/text()'))
-        return clean_text(self, sku)
-
-    def _parse_retailer_key(self, response):
-        retailer_key = extract_first(response.xpath('//span[@itemprop="sku"]/text()'))
-        return clean_text(self, retailer_key)
+            return float(price[0].replace(",", ""))
 
     def _parse_instore(self, response):
         if self._parse_price(response):
@@ -163,25 +219,26 @@ class ConnectionSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_shippingphrase(response):
-        shipping_phrase = extract_first(response.xpath('//span[@id="productEstimatedShipping"]/text()'))
-        return shipping_phrase
+        shipping_phrase = response.xpath('//div[@class="long-message-block"]//text()').extract()
+        return "".join(shipping_phrase).strip()
 
     @staticmethod
     def _parse_stock_status(response):
         stock_value = 4
-        stock_status = extract_first(response.xpath('//span[@id="productAvailability"]/text()'))
-        stock_status = stock_status.lower()
+        stock_status = response.xpath('//link[@itemprop="availability"]/@href').extract()
+        if stock_status:
+            stock_status = stock_status[0].lower()
 
-        if stock_status == 'out of stock':
+        if 'outofstock' in stock_status:
             stock_value = 0
 
-        if stock_status == 'in stock':
+        if 'instock' in stock_status:
             stock_value = 1
 
-        if stock_status == 'call for availability':
+        if 'callforavailability' in stock_status:
             stock_value = 2
 
-        if stock_status == 'discontinued':
+        if 'discontinued' in stock_status:
             stock_value = 3
 
         return stock_value
@@ -224,7 +281,7 @@ class ConnectionSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
-        totals = re.search('of (\d+) Results', response.body)
+        totals = re.search("'search_results_count':'(\d+)',", response.body)
         if totals:
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
             if totals.isdigit():
@@ -238,7 +295,7 @@ class ConnectionSpider(BaseProductsSpider):
     def _scrape_results_per_page(self, response):
         if self.retailer_id:
             return None
-        result_per_page = re.search('1 - (\d+) of', response.body)
+        result_per_page = re.search('1 - (\d+)</strong>', response.body)
         if result_per_page:
             result_per_page = result_per_page.group(1).replace(',', '').replace('.', '').strip()
             if result_per_page.isdigit():
@@ -247,7 +304,8 @@ class ConnectionSpider(BaseProductsSpider):
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
+        links = response.xpath('//div[@class="search-results"]'
+                               '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
 
         if not links:
             data = json.loads(response.body)
@@ -268,6 +326,6 @@ class ConnectionSpider(BaseProductsSpider):
         self.current_page += 1
 
         if self.current_page <= page_count:
-            next_page = self.Paginate_URL.format(page_num=self.current_page,
-                                                 result_per_page=self.RESULT_PER_PAGE)
+            next_page = self.SEARCH_URL.format(page_num=self.current_page,
+                                               search_term=response.meta['search_term'])
             return next_page
