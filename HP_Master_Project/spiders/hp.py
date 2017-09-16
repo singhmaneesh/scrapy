@@ -6,6 +6,7 @@ from scrapy import Request
 import re
 import urlparse
 import traceback
+import json
 
 from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
@@ -24,6 +25,10 @@ class HpSpider(BaseProductsSpider):
                    "&searchTermScope=&pageSize=12&isAjax=true&beginIndex={begin_index}" \
                    "&subCatFacet=&orderBy=99&pagingOnly=true"
 
+    API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
+              '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
+
     CATEGORY_URL = "http://store.hp.com/webapp/wcs/stores/servlet/HPBreadCrumbView?productId={product_id}" \
                    "&langId=-1&storeId=10151&catalogId=10051&urlLangId=-1&modelId={model_id}"
 
@@ -35,6 +40,14 @@ class HpSpider(BaseProductsSpider):
         self.current_page = 0
         self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
                           "Chrome/60.0.3112.90 Safari/537.36"
+
+    def start_requests(self):
+        for request in super(HpSpider, self).start_requests():
+            if not self.product_url:
+                request = request.replace(callback=self.parse)
+            if self.retailer_id:
+                request = request.replace(callback=self.parse)
+            yield request
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -223,6 +236,9 @@ class HpSpider(BaseProductsSpider):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = response.xpath('//div[@class="searchCount"]/span[@class="searchTotal"]'
                                 '/text()').extract()
         if totals:
@@ -235,18 +251,24 @@ class HpSpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        try:
-            links = response.xpath('//div[@class="productWrapper"]'
-                                   '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
+        links = response.xpath('//div[@class="productWrapper"]'
+                               '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
 
-            for link in links:
-                url = urlparse.urljoin(response.url, link)
-                yield url, ProductItem()
-        except:
-            self.log("Found no product links {}".format(traceback.format_exc()))
-            yield None
+        if self.retailer_id:
+            data = json.loads(response.body)
+            link_list = data
+            for link in link_list:
+                link = link['product_link']
+                links.append(link)
+
+        links = [response.urljoin(x) for x in links]
+
+        for link in links:
+            yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
+        if self.retailer_id:
+            return None
         page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page'] + 1
         search_term = response.meta['search_term']
         self.current_page += 1
