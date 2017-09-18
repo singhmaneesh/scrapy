@@ -307,7 +307,7 @@ class CdwSpider(BaseProductsSpider):
         links = response.xpath('//div[@class="search-results"]'
                                '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
 
-        if not links:
+        if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:

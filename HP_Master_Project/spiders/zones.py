@@ -260,7 +260,7 @@ class ZonesSpider(BaseProductsSpider):
         links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
                                '/a[@class="title"]/@href').extract()
 
-        if not links:
+        if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:
