@@ -161,7 +161,7 @@ class EnUsInsightSpider(BaseProductsSpider):
         product["manufacturer"] = json_response["webProduct"]["manufacturerName"]
         product["brand"] = json_response["webProduct"]["manufacturerName"]
         product["features"] = self.get_product_features(json_response)
-        product["retailer_key"] = self.retailer_id
+        product["retailer_key"] = json_response["webProduct"]["materialId"]
         product["sku"] = json_response["webProduct"]["materialId"]
         product["ean"] = json_response["webProduct"]["unspscCode"]
         product["unspsc"] = json_response["webProduct"]["unspscCode"]
