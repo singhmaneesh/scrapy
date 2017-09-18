@@ -54,8 +54,6 @@ class StaplesSpider(BaseProductsSpider):
         for request in super(StaplesSpider, self).start_requests():
             if not self.product_url:
                 request = request.replace(callback=self.parse_search)
-            if self.retailer_id:
-                request = request.replace(callback=self.parse)
             yield request
 
     def parse_search(self, response):
