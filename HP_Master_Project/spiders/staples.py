@@ -47,8 +47,8 @@ class StaplesSpider(BaseProductsSpider):
         self.is_category = False
         super(StaplesSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
-        self.user_agent = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/56.0.2924.87 Safari/537.36")
+        self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
+                          "Chrome/60.0.3112.105 Safari/537.36 Vivaldi/1.92.917.43"
 
     def start_requests(self):
         for request in super(StaplesSpider, self).start_requests():
@@ -147,10 +147,6 @@ class StaplesSpider(BaseProductsSpider):
         # Parse ship to store
         ship_to_store = self._parse_shiptostore(response)
         product['shiptostore'] = ship_to_store
-
-        # Parse shipping phrase
-        shipping_phrase = self._parse_shippingphrase(response)
-        product['shippingphrase'] = shipping_phrase
 
         # Parse gallery
         product['gallery'] = self._parse_gallery(response)
@@ -286,10 +282,6 @@ class StaplesSpider(BaseProductsSpider):
         except Exception as e:
             self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
             return None
-
-    @staticmethod
-    def _parse_shippingphrase(response):
-        return None
 
     def _parse_features(self, response):
         try:
