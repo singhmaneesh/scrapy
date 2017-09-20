@@ -111,10 +111,6 @@ class StaplesSpider(BaseProductsSpider):
         name = self._parse_name(response)
         product['name'] = name
 
-        # Parse brand
-        brand = self._parse_brand(response)
-        product['brand'] = brand
-
         # Parse image
         image = self._parse_image(response)
         product['image'] = image
@@ -203,9 +199,6 @@ class StaplesSpider(BaseProductsSpider):
         title = response.xpath('//span[contains(@itemprop, "name")]//text()').extract()
         if title:
             return title[0]
-
-    def _parse_brand(self, response):
-        return extract_brand_from_first_words(self._parse_name(response))
 
     @staticmethod
     def _parse_image(response):

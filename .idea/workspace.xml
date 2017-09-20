@@ -3,15 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="37e11322-5630-4182-82b5-cad5854914ca" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/brand_data/brands.list" afterPath="$PROJECT_DIR$/HP_Master_Project/brand_data/brands.list" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/extract_brand.py" afterPath="$PROJECT_DIR$/HP_Master_Project/extract_brand.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/connection.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/connection.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/hp.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/hp.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/zones.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/zones.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/requirements.txt" afterPath="$PROJECT_DIR$/requirements.txt" />
     </list>
     <ignored path="HP_Master_Project.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -32,11 +25,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="staples.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="staples.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="534">
-              <caret line="323" column="16" selection-start-line="323" selection-start-column="16" selection-end-line="323" selection-end-column="16" />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
@@ -54,13 +47,25 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="cdw.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="cdw.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="954">
-              <caret line="53" column="34" selection-start-line="53" selection-start-column="34" selection-end-line="53" selection-end-column="34" />
+            <state relative-caret-position="486">
+              <caret line="161" column="61" selection-start-line="161" selection-start-column="61" selection-end-line="161" selection-end-column="61" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="extract_brand.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HP_Master_Project/extract_brand.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="504">
+              <caret line="37" column="61" selection-start-line="37" selection-start-column="61" selection-end-line="37" selection-end-column="61" />
+              <folding>
+                <element signature="e#20#61#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -114,16 +119,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="brands.csv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HP_Master_Project/brand_data/brands.csv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="17" column="12" selection-start-line="17" selection-start-column="12" selection-end-line="17" selection-end-column="12" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="zones.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/zones.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -132,16 +127,6 @@
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="extract_brand.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HP_Master_Project/extract_brand.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="54">
-              <caret line="3" column="16" selection-start-line="3" selection-start-column="7" selection-end-line="3" selection-end-column="16" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -162,10 +147,10 @@
         <option value="$PROJECT_DIR$/HP_Master_Project/spiders/hp.py" />
         <option value="$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py" />
         <option value="$PROJECT_DIR$/HP_Master_Project/spiders/zones.py" />
-        <option value="$PROJECT_DIR$/HP_Master_Project/extract_brand.py" />
         <option value="$PROJECT_DIR$/requirements.txt" />
-        <option value="$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py" />
+        <option value="$PROJECT_DIR$/HP_Master_Project/extract_brand.py" />
         <option value="$PROJECT_DIR$/HP_Master_Project/spiders/staples.py" />
+        <option value="$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py" />
       </list>
     </option>
   </component>
@@ -348,7 +333,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="HP_Master_Project" />
       <option name="SCRIPT_NAME" value="$USER_HOME$/mobile_content_venv/lib/python2.7/site-packages/scrapy/cmdline.py" />
-      <option name="PARAMETERS" value="crawl cdw_products -a searchterms_str=&quot;bag&quot;" />
+      <option name="PARAMETERS" value="crawl staples_products -a retailer_id=4" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
@@ -378,16 +363,16 @@
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13577981" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4858342" sideWeight="0.50703365" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32948583" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4795383" sideWeight="0.49296635" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.521511" sideWeight="0.49296635" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.003147954" sideWeight="0.49051988" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.0" sideWeight="0.49051988" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.47219306" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -416,7 +401,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="326" />
+      <option name="time" value="327" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -692,7 +677,7 @@
         <state relative-caret-position="2178">
           <caret line="122" column="18" selection-start-line="122" selection-start-column="18" selection-end-line="122" selection-end-column="18" />
           <folding>
-            <element signature="e#0#14#0" expanded="true" />
+            <element signature="e#0#14#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -755,24 +740,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="954">
-          <caret line="53" column="34" selection-start-line="53" selection-start-column="34" selection-end-line="53" selection-end-column="34" />
-          <folding>
-            <element signature="e#27#93#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/extract_brand.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="54">
-          <caret line="3" column="16" selection-start-line="3" selection-start-column="7" selection-end-line="3" selection-end-column="16" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/requirements.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="414">
@@ -781,10 +748,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/extract_brand.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="504">
+          <caret line="37" column="61" selection-start-line="37" selection-start-column="61" selection-end-line="37" selection-end-column="61" />
+          <folding>
+            <element signature="e#20#61#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/staples.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="534">
-          <caret line="323" column="16" selection-start-line="323" selection-start-column="16" selection-end-line="323" selection-end-column="16" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#27#93#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/cdw.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="486">
+          <caret line="161" column="61" selection-start-line="161" selection-start-column="61" selection-end-line="161" selection-end-column="61" />
           <folding>
             <element signature="e#27#93#0" expanded="true" />
           </folding>

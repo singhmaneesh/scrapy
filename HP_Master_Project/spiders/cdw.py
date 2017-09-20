@@ -155,8 +155,6 @@ class CdwSpider(BaseProductsSpider):
         brand = response.xpath('//span[@itemprop="brand"]/text()').extract()
         if not brand:
             brand = response.xpath('//span[@class="brand"]/text()').extract()
-        if not brand:
-            return extract_brand_from_first_words(self._parse_name(response))
         return brand[0].strip() if brand else None
 
     @staticmethod
