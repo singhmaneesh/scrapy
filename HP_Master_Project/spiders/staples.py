@@ -1,17 +1,19 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-from scrapy import Request, FormRequest
+from scrapy import Request
 from scrapy.log import WARNING
 import urlparse
 import json
 import re
 import time
 import traceback
+import requests
 
-from HP_Master_Project.utils import clean_text, clean_list
+from HP_Master_Project.utils import clean_text
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class StaplesSpider(BaseProductsSpider):
@@ -102,9 +104,16 @@ class StaplesSpider(BaseProductsSpider):
             self.log("Website under maintenance error, retrying request: {}".format(response.url), WARNING)
             return Request(response.url, callback=self.parse_product, meta=response.meta, dont_filter=True)
 
+        if response.status == 429:
+            response = requests.get(url=response.url, timeout=5)
+
         # Parse name
         name = self._parse_name(response)
         product['name'] = name
+
+        # Parse brand
+        brand = self._parse_brand(response)
+        product['brand'] = brand
 
         # Parse image
         image = self._parse_image(response)
@@ -194,6 +203,9 @@ class StaplesSpider(BaseProductsSpider):
         title = response.xpath('//span[contains(@itemprop, "name")]//text()').extract()
         if title:
             return title[0]
+
+    def _parse_brand(self, response):
+        return extract_brand_from_first_words(self._parse_name(response))
 
     @staticmethod
     def _parse_image(response):

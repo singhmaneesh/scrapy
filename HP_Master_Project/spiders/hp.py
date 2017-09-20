@@ -11,6 +11,7 @@ import json
 from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class HpSpider(BaseProductsSpider):

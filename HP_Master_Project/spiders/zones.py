@@ -11,6 +11,7 @@ from scrapy.conf import settings
 from HP_Master_Project.utils import clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class ZonesSpider(BaseProductsSpider):

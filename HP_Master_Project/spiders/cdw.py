@@ -10,6 +10,7 @@ from scrapy import Request
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider, FormatterWithDefaults
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class CdwSpider(BaseProductsSpider):
@@ -150,11 +151,12 @@ class CdwSpider(BaseProductsSpider):
         if name:
             return name[0]
 
-    @staticmethod
-    def _parse_brand(response):
+    def _parse_brand(self, response):
         brand = response.xpath('//span[@itemprop="brand"]/text()').extract()
         if not brand:
             brand = response.xpath('//span[@class="brand"]/text()').extract()
+        if not brand:
+            return extract_brand_from_first_words(self._parse_name(response))
         return brand[0].strip() if brand else None
 
     @staticmethod

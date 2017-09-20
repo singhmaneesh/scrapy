@@ -14,6 +14,7 @@ from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider, cond_set, \
     cond_set_value
 from HP_Master_Project.utils import is_empty
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class OfficedepotProductsSpider(BaseProductsSpider):

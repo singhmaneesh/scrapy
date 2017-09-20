@@ -1,6 +1,8 @@
 # ~~coding=utf-8~~
 
 from pkg_resources import resource_string
+import traceback
+import csv
 
 BRANDS = ()
 
@@ -20,6 +22,17 @@ def _brand_in_list(brand):
     """ Utility method to check if the given brand is in the list """
     global BRANDS
     return brand.lower() in BRANDS
+
+
+def _find_brand(brand, fname='brand_data/brands.csv'):
+    try:
+        data = resource_string(__name__, fname)
+        brandsreader = csv.reader(data.split('\n'), delimiter=',')
+        for x in brandsreader:
+            if brand in x:
+                return x[0]
+    except:
+        print traceback.format_exc()
 
 
 def extract_brand_from_first_words(text, fname='brand_data/brands.list', max_words=7):
@@ -50,5 +63,8 @@ def extract_brand_from_first_words(text, fname='brand_data/brands.list', max_wor
     for cur_words in list(reversed(range(max_words)))[0:-1]:
         partial_brand = text.split(' ')[0:cur_words]
         partial_brand = ' '.join(partial_brand)
-        if _brand_in_list(partial_brand):
+        found_brand = _find_brand(partial_brand)
+        if found_brand:
+            return found_brand
+        elif _brand_in_list(partial_brand):
             return partial_brand
