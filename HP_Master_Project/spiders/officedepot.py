@@ -258,16 +258,17 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             categories_links.append(link)
 
     def _scrape_total_matches(self, response):
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
         totals = response.xpath('//div[contains(@id, "resultCnt")]/text()').extract()
         if totals:
+            data_len = 0
+            if self.retailer_id:
+                data = json.loads(response.body)
+                data_len = len(data)
             totals = totals[0].replace(',', '').replace('.', '').strip()
             if totals.isdigit():
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
-                return int(totals)
+                return int(totals) + data_len
 
     def _get_products(self, response):
         if "officedepot.com/a/products" in response.url:
