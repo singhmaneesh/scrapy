@@ -42,12 +42,6 @@ class HpSpider(BaseProductsSpider):
                           "Chrome/60.0.3112.90 Safari/537.36"
         self.retailer_check = False
 
-    def start_requests(self):
-        for request in super(HpSpider, self).start_requests():
-            if self.searchterms and self.retailer_id:
-                request = request.replace(callback=self.parse)
-            yield request
-
     def _parse_single_product(self, response):
         return self.parse_product(response)
 

@@ -36,12 +36,6 @@ class ConnectionSpider(BaseProductsSpider):
         self.current_page = 1
         self.retailer_check = False
 
-    def start_requests(self):
-        for request in super(ConnectionSpider, self).start_requests():
-            if self.searchterms and self.retailer_id:
-                request = request.replace(callback=self.parse)
-            yield request
-
     def _parse_single_product(self, response):
         return self.parse_product(response)
 
