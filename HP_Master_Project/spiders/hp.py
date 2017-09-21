@@ -4,8 +4,7 @@ from __future__ import absolute_import, division, unicode_literals
 from scrapy.log import WARNING
 from scrapy import Request
 import re
-import urlparse
-import traceback
+import requests
 import json
 
 from HP_Master_Project.utils import is_empty
@@ -41,6 +40,7 @@ class HpSpider(BaseProductsSpider):
         self.current_page = 0
         self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
                           "Chrome/60.0.3112.90 Safari/537.36"
+        self.retailer_check = False
 
     def start_requests(self):
         for request in super(HpSpider, self).start_requests():
@@ -258,7 +258,11 @@ class HpSpider(BaseProductsSpider):
         link_data.extend(links)
 
         if self.retailer_id:
-            data = json.loads(response.body)
+            if self.retailer_check:
+                pass
+            self.retailer_check = True
+
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
             link_list = data
             for link in link_list:
                 link = link['product_link']

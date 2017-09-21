@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, unicode_literals
 import json
 import re
 import socket
+import requests
 import urlparse
 import string
 
@@ -41,6 +42,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         socket.setdefaulttimeout(60)
         super(OfficedepotProductsSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
+        self.retailer_check = False
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -283,9 +285,12 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         link_data.extend(links)
 
         if self.retailer_id:
-            data = json.loads(response.body)
-            link_list = data
-            for link in link_list:
+            if self.retailer_check:
+                pass
+            self.retailer_check = True
+
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+            for link in data:
                 link = link['product_link']
                 if 'officedepot' in link:
                     link_data.append(link)

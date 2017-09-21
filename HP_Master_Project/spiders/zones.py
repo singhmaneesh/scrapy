@@ -6,6 +6,7 @@ from scrapy.log import WARNING
 import re
 import time
 import json
+import requests
 from scrapy.conf import settings
 
 from HP_Master_Project.utils import clean_list
@@ -39,6 +40,7 @@ class ZonesSpider(BaseProductsSpider):
         self.user_agent = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                            "Chrome/60.0.3112.90 Safari/537.36")
         settings.overrides['DOWNLOADER_CLIENTCONTEXTFACTORY'] = 'HP_Master_Project.utils.TLSFlexibleContextFactory'
+        self.retailer_check = False
 
     def start_requests(self):
         for request in super(ZonesSpider, self).start_requests():
@@ -264,7 +266,11 @@ class ZonesSpider(BaseProductsSpider):
         link_data.extend(links)
 
         if self.retailer_id:
-            data = json.loads(response.body)
+            if self.retailer_check:
+                pass
+            self.retailer_check = True
+
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
             link_list = data
             for link in link_list:
                 link = link['product_link']

@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 import urlparse
 import json
+import requests
 
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
@@ -33,6 +34,7 @@ class ConnectionSpider(BaseProductsSpider):
         super(ConnectionSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
         self.current_page = 1
+        self.retailer_check = False
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -253,7 +255,11 @@ class ConnectionSpider(BaseProductsSpider):
         link_data.extend(links)
 
         if self.retailer_id:
-            data = json.loads(response.body)
+            if self.retailer_check:
+                pass
+            self.retailer_check = True
+
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
             link_list = data
             for link in link_list:
                 link = link['product_link']
