@@ -229,19 +229,21 @@ class HpSpider(BaseProductsSpider):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()
 
     def _scrape_total_matches(self, response):
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
         totals = response.xpath('//div[@class="searchCount"]/span[@class="searchTotal"]'
                                 '/text()').extract()
         if totals:
+            data_len = 0
+            if self.retailer_id:
+                data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+                data_len = len(data)
+
             totals = re.search("(\d+) results", totals[0])
             if totals:
                 totals = totals.group(1).replace(',', '').replace('.', '').strip()
                 if totals.isdigit():
                     if not self.TOTAL_MATCHES:
                         self.TOTAL_MATCHES = int(totals)
-                    return int(totals)
+                    return int(totals) + data_len
 
     def _scrape_product_links(self, response):
         link_data = []
