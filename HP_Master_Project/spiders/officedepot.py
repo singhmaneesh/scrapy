@@ -262,7 +262,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         if totals:
             data_len = 0
             if self.retailer_id:
-                data = json.loads(response.body)
+                data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
                 data_len = len(data)
             totals = totals[0].replace(',', '').replace('.', '').strip()
             if totals.isdigit():
