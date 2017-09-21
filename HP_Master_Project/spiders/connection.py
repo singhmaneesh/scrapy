@@ -229,17 +229,18 @@ class ConnectionSpider(BaseProductsSpider):
     def _scrape_total_matches(self, response):
         totals = re.search('of (\d+) Results', response.body)
         if totals:
+            data_len = 0
+            if self.retailer_id:
+                data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+                data_len = len(data)
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
             if totals.isdigit():
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
-                return int(totals)
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
+                return int(totals) + data_len
 
     def _scrape_results_per_page(self, response):
-        if self.retailer_id:
+        if self.retailer_id and not self.searchterms:
             return None
         result_per_page = re.search('1 - (\d+) of', response.body)
         if result_per_page:
@@ -270,7 +271,7 @@ class ConnectionSpider(BaseProductsSpider):
             yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        if self.retailer_id:
+        if self.retailer_id and not self.searchterms:
             return None
         page_count = self.TOTAL_MATCHES / self.RESULT_PER_PAGE + 1
 
