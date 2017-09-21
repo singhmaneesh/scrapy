@@ -250,6 +250,8 @@ class StaplesSpider(BaseProductsSpider):
                 product['productstockstatus'] = 1
 
             product['price'] = jsonresponse['pricing']['nowPrice']
+            if not product['price']:
+                product['price'] = jsonresponse['pricing']['finalPrice']
             product['saleprice'] = jsonresponse['pricing']['finalPrice']
             return product
 
