@@ -44,9 +44,7 @@ class HpSpider(BaseProductsSpider):
 
     def start_requests(self):
         for request in super(HpSpider, self).start_requests():
-            if not self.product_url:
-                request = request.replace(callback=self.parse)
-            if self.retailer_id:
+            if self.searchterms and self.retailer_id:
                 request = request.replace(callback=self.parse)
             yield request
 
