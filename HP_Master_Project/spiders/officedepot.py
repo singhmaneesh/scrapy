@@ -313,7 +313,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             return url+'&nao='+str(new_nao)
 
     def _scrape_next_results_page_link(self, response):
-        if self.retailer_id:
+        if self.retailer_id and not self.searchterms:
             return
         if self.TOTAL_MATCHES is None:
             self.log('No "next result page" link!')

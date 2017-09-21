@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="37e11322-5630-4182-82b5-cad5854914ca" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/hp.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/hp.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py" afterPath="$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py" />
     </list>
     <ignored path="HP_Master_Project.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -69,11 +70,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="hp.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="hp.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/hp.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="509">
-              <caret line="244" column="53" selection-start-line="244" selection-start-column="53" selection-end-line="244" selection-end-column="53" />
+            <state relative-caret-position="437">
+              <caret line="264" column="60" selection-start-line="264" selection-start-column="60" selection-end-line="264" selection-end-column="60" />
               <folding>
                 <element signature="e#27#93#0" expanded="true" />
               </folding>
@@ -81,11 +82,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="officedepot.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="officedepot.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="437">
-              <caret line="265" column="36" selection-start-line="262" selection-start-column="12" selection-end-line="265" selection-end-column="36" />
+            <state relative-caret-position="498">
+              <caret line="322" column="45" selection-start-line="322" selection-start-column="45" selection-end-line="322" selection-end-column="45" />
               <folding>
                 <element signature="e#0#66#0" expanded="true" />
               </folding>
@@ -769,22 +770,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py">
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/hp.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="437">
-          <caret line="265" column="36" selection-start-line="262" selection-start-column="12" selection-end-line="265" selection-end-column="36" />
+          <caret line="264" column="60" selection-start-line="264" selection-start-column="60" selection-end-line="264" selection-end-column="60" />
           <folding>
-            <element signature="e#0#66#0" expanded="true" />
+            <element signature="e#27#93#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/hp.py">
+    <entry file="file://$PROJECT_DIR$/HP_Master_Project/spiders/officedepot.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="509">
-          <caret line="244" column="53" selection-start-line="244" selection-start-column="53" selection-end-line="244" selection-end-column="53" />
+        <state relative-caret-position="498">
+          <caret line="322" column="45" selection-start-line="322" selection-start-column="45" selection-end-line="322" selection-end-column="45" />
           <folding>
-            <element signature="e#27#93#0" expanded="true" />
+            <element signature="e#0#66#0" expanded="true" />
           </folding>
         </state>
       </provider>

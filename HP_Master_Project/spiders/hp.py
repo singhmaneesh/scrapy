@@ -268,7 +268,7 @@ class HpSpider(BaseProductsSpider):
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        if self.retailer_id:
+        if self.retailer_id and not self.searchterms:
             return None
         page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page'] + 1
         search_term = response.meta['search_term']
