@@ -350,6 +350,7 @@ class StaplesSpider(BaseProductsSpider):
             return 0
 
     def _scrape_product_links(self, response):
+        link_data = []
         links = response.xpath('//a[contains(@property, "url")]/@href').extract()
 
         if not links:
@@ -357,17 +358,18 @@ class StaplesSpider(BaseProductsSpider):
                                    '/a[contains(@class, "product-title")]/@href').extract()
         if not links:
             links = response.xpath('//a[@class="product-title scTrack pfm"]/@href').extract()
+        link_data.extend(links)
 
         if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:
                 link = link['product_link']
-                links.append(link)
+                link_data.append(link)
 
-        links = [urlparse.urljoin(response.url, x) for x in links]
+        link_data = [urlparse.urljoin(response.url, x) for x in link_data]
 
-        for link in links:
+        for link in link_data:
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):

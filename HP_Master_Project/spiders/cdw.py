@@ -304,17 +304,19 @@ class CdwSpider(BaseProductsSpider):
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
+        link_data = []
         links = response.xpath('//div[@class="search-results"]'
                                '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
+        link_data.extend(links)
 
         if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:
                 link = link['product_link']
-                links.append(link)
+                link_data.append(link)
 
-        for link in links:
+        for link in link_data:
             url = urlparse.urljoin(response.url, link)
             yield url, ProductItem()
 

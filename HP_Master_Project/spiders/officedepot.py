@@ -276,9 +276,11 @@ class OfficedepotProductsSpider(BaseProductsSpider):
                 yield req_or_prod
 
     def _scrape_product_links(self, response):
+        link_data = []
         links = response.xpath(
             '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
         ).extract() or response.css('.desc_text a::attr("href")').extract()
+        link_data.extend(links)
 
         if self.retailer_id:
             data = json.loads(response.body)
@@ -286,9 +288,9 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             for link in link_list:
                 link = link['product_link']
                 if 'officedepot' in link:
-                    links.append(link)
+                    link_data.append(link)
 
-        for link in links:
+        for link in link_data:
             yield link, ProductItem()
 
     def _get_nao(self, url):

@@ -258,17 +258,19 @@ class ZonesSpider(BaseProductsSpider):
             return len(data)
 
     def _scrape_product_links(self, response):
+        link_data = []
         links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
                                '/a[@class="title"]/@href').extract()
+        link_data.extend(links)
 
         if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:
                 link = link['product_link']
-                links.append(link)
+                link_data.append(link)
 
-        for link in links:
+        for link in link_data:
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
