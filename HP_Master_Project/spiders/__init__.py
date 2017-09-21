@@ -280,14 +280,13 @@ class BaseProductsSpider(Spider):
                         ),
                         meta={'search_term': st, 'remaining': self.quantity},
                     )
-            else:
-                yield Request(
-                    self.url_formatter.format(
-                        self.API_URL,
-                        retailer_id=self.retailer_id,
-                    ),
-                    meta={'search_term': '', 'remaining': self.quantity}
-                )
+            yield Request(
+                self.url_formatter.format(
+                    self.API_URL,
+                    retailer_id=self.retailer_id,
+                ),
+                meta={'search_term': '', 'remaining': self.quantity}
+            )
 
         for st in self.searchterms:
             yield Request(
