@@ -84,6 +84,10 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         model = self._parse_model(response)
         cond_set_value(product, 'model', model)
 
+        # Parse gallery
+        gallery = self._parse_gallery(response)
+        product['gallery'] = gallery
+
         # Parse stock status
         oos = self._parse_product_stock_status(response)
         cond_set_value(product, 'productstockstatus', oos)
@@ -148,6 +152,20 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             '//*[@id="attributemodel_namekey"]/text()').extract()
         if model:
             return model[0].strip()
+
+    @staticmethod
+    def _parse_gallery(response):
+        image_list = []
+        if response.xpath('//script[@id="skuImageData"]/text()'):
+            image_data = response.xpath('//script[@id="skuImageData"]/text()')[0].extract()
+            image_data = json.loads(image_data)
+            image_len = len(image_data)
+            for i in range(image_len):
+                image_url = 'http://s7d1.scene7.com/is/image/officedepot/' + image_data['image_' + str(i)]
+                image_list.append(image_url)
+        if image_list:
+            return image_list
+        return None
 
     @staticmethod
     def _parse_categories(response):
