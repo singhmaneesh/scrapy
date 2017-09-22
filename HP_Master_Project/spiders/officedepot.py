@@ -282,7 +282,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
         ).extract() or response.css('.desc_text a::attr("href")').extract()
 
-        if not links:
+        if self.retailer_id:
             data = json.loads(response.body)
             for link in data:
                 link = link['product_link']
@@ -315,7 +315,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             return
 
         if self.CURRENT_NAO > self.quantity + self.PAGINATE_BY:
-            return  # num_products > quantity
+            return
         self.CURRENT_NAO += self.PAGINATE_BY
         if '/a/browse/' in response.url:    # paginate in category or subcategory
             new_paginate_url = self.parse_paginate_link(response, self.CURRENT_NAO)
