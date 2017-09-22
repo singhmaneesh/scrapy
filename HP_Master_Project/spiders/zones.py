@@ -246,6 +246,9 @@ class ZonesSpider(BaseProductsSpider):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = response.xpath('//div[@class="serp-item-count"]').extract()
         if totals:
             totals = totals[0]
@@ -255,29 +258,21 @@ class ZonesSpider(BaseProductsSpider):
                 if totals.isdigit():
                     return int(totals)
 
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
-
     def _scrape_product_links(self, response):
         link_data = []
-        links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
-                               '/a[@class="title"]/@href').extract()
-        link_data.extend(links)
-
         if self.retailer_id:
-            if self.retailer_check:
-                pass
-            self.retailer_check = True
-
             data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
             link_list = data
             for link in link_list:
                 link = link['product_link']
                 link_data.append(link)
-
-        for link in link_data:
-            yield link, ProductItem()
+            for link in link_data:
+                yield link, ProductItem()
+        else:
+            links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
+                                   '/a[@class="title"]/@href').extract()
+            for link in links:
+                yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:

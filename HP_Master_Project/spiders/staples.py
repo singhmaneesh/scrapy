@@ -362,11 +362,7 @@ class StaplesSpider(BaseProductsSpider):
         link_data.extend(links)
 
         if self.retailer_id:
-            if self.retailer_check:
-                pass
-            self.retailer_check = True
-
-            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+            data = json.loads(response.body)
             link_list = data
             for link in link_list:
                 link = link['product_link']

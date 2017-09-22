@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, unicode_literals
 import json
 import re
 import socket
-import requests
 import urlparse
 import string
 
@@ -258,17 +257,16 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             categories_links.append(link)
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = response.xpath('//div[contains(@id, "resultCnt")]/text()').extract()
         if totals:
-            data_len = 0
-            if self.retailer_id:
-                data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
-                data_len = len(data)
             totals = totals[0].replace(',', '').replace('.', '').strip()
             if totals.isdigit():
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
-                return int(totals) + data_len
+                return int(totals)
 
     def _get_products(self, response):
         if "officedepot.com/a/products" in response.url:
@@ -279,25 +277,22 @@ class OfficedepotProductsSpider(BaseProductsSpider):
                 yield req_or_prod
 
     def _scrape_product_links(self, response):
-        link_data = []
-        links = response.xpath(
-            '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
-        ).extract() or response.css('.desc_text a::attr("href")').extract()
-        link_data.extend(links)
-
+        link_list = []
         if self.retailer_id:
-            if self.retailer_check:
-                pass
-            self.retailer_check = True
-
-            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+            data = json.loads(response.body)
             for link in data:
                 link = link['product_link']
                 if 'officedepot' in link:
-                    link_data.append(link)
+                    link_list.append(link)
+            for link in link_list:
+                yield link, ProductItem()
+        else:
+            links = response.xpath(
+                '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
+            ).extract() or response.css('.desc_text a::attr("href")').extract()
 
-        for link in link_data:
-            yield link, ProductItem()
+            for link in links:
+                yield link, ProductItem()
 
     def _get_nao(self, url):
         nao = re.search(r'nao=(\d+)', url)
@@ -313,7 +308,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             return url+'&nao='+str(new_nao)
 
     def _scrape_next_results_page_link(self, response):
-        if self.retailer_id and not self.searchterms:
+        if self.retailer_id:
             return
         if self.TOTAL_MATCHES is None:
             self.log('No "next result page" link!')

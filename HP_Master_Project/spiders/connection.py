@@ -227,20 +227,19 @@ class ConnectionSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = re.search('of (\d+) Results', response.body)
         if totals:
-            data_len = 0
-            if self.retailer_id:
-                data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
-                data_len = len(data)
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
             if totals.isdigit():
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
-                return int(totals) + data_len
+                return int(totals)
 
     def _scrape_results_per_page(self, response):
-        if self.retailer_id and not self.searchterms:
+        if self.retailer_id:
             return None
         result_per_page = re.search('1 - (\d+) of', response.body)
         if result_per_page:
@@ -251,27 +250,23 @@ class ConnectionSpider(BaseProductsSpider):
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
-        link_data = []
-        links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
-        link_data.extend(links)
-
+        link_list = []
         if self.retailer_id:
-            if self.retailer_check:
-                pass
-            self.retailer_check = True
-
-            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
-            link_list = data
-            for link in link_list:
+            data = json.loads(response.body)
+            for link in data:
                 link = link['product_link']
-                link_data.append(link)
-
-        for link in link_data:
-            url = urlparse.urljoin(response.url, link)
-            yield url, ProductItem()
+                link_list.append(link)
+            for link in link_list:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
+        else:
+            links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        if self.retailer_id and not self.searchterms:
+        if self.retailer_id:
             return None
         page_count = self.TOTAL_MATCHES / self.RESULT_PER_PAGE + 1
 

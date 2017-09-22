@@ -35,7 +35,6 @@ class CdwSpider(BaseProductsSpider):
         self.user_agent = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                            "Chrome/60.0.3112.90 Safari/537.36")
         self.url_formatter = FormatterWithDefaults(page_num=1)
-        self.retailer_check = False
 
     def start_requests(self):
         for request in super(CdwSpider, self).start_requests():
@@ -282,6 +281,10 @@ class CdwSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
+
         totals = re.search("'search_results_count':'(\d+)',", response.body)
         if totals:
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
@@ -289,9 +292,6 @@ class CdwSpider(BaseProductsSpider):
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
                 return int(totals)
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
 
     def _scrape_results_per_page(self, response):
         if self.retailer_id:
@@ -305,25 +305,21 @@ class CdwSpider(BaseProductsSpider):
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
-        link_data = []
-        links = response.xpath('//div[@class="search-results"]'
-                               '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
-        link_data.extend(links)
-
+        link_list = []
         if self.retailer_id:
-            if self.retailer_check:
-                pass
-            self.retailer_check = True
-
-            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
-            link_list = data
-            for link in link_list:
+            data = json.loads(response.body)
+            for link in data:
                 link = link['product_link']
-                link_data.append(link)
-
-        for link in link_data:
-            url = urlparse.urljoin(response.url, link)
-            yield url, ProductItem()
+                link_list.append(link)
+            for link in link_list:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
+        else:
+            links = response.xpath('//div[@class="search-results"]'
+                                   '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
