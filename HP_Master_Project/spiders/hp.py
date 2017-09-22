@@ -230,7 +230,7 @@ class HpSpider(BaseProductsSpider):
     def _scrape_total_matches(self, response):
         if self.retailer_id:
             data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
-            data_len = len(data)
+            return len(data)
 
         totals = response.xpath('//div[@class="searchCount"]/span[@class="searchTotal"]'
                                 '/text()').extract()
@@ -244,19 +244,22 @@ class HpSpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[@class="productWrapper"]'
-                               '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
-
+        link_list = []
         if self.retailer_id:
-            link_list = json.loads(response.body)
-            for link in link_list:
+            data = json.loads(response.body)
+            for link in data:
                 link = link['product_link']
-                links.append(link)
+                link_list.append(link)
+            for link in link_list:
+                yield link, ProductItem()
+        else:
+            links = response.xpath('//div[@class="productWrapper"]'
+                                   '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
 
-        links = [response.urljoin(x) for x in links]
+            links = [response.urljoin(x) for x in links]
 
-        for link in links:
-            yield link, ProductItem()
+            for link in links:
+                yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
