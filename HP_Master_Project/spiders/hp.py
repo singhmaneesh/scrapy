@@ -229,7 +229,7 @@ class HpSpider(BaseProductsSpider):
 
     def _scrape_total_matches(self, response):
         if self.retailer_id:
-            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+            data = json.loads(response.body)
             return len(data)
 
         totals = response.xpath('//div[@class="searchCount"]/span[@class="searchTotal"]'
@@ -264,11 +264,11 @@ class HpSpider(BaseProductsSpider):
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
             return None
-        page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page'] + 1
+        page_count = int(self.TOTAL_MATCHES / 12 + 1)
         search_term = response.meta['search_term']
         self.current_page += 1
 
-        begin_index = self.current_page * response.meta['scraped_results_per_page']
+        begin_index = self.current_page * 12
 
         if self.current_page <= page_count:
             next_page = self.PAGINATE_URL.format(search_term=search_term, begin_index=begin_index)
