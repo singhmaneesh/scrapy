@@ -307,7 +307,7 @@ class CdwSpider(BaseProductsSpider):
     def _scrape_product_links(self, response):
         link_list = []
         if self.retailer_id:
-            data = json.loads(response.body)
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
             for link in data:
                 link = link['product_link']
                 link_list.append(link)
