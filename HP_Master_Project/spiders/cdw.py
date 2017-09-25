@@ -181,13 +181,14 @@ class CdwSpider(BaseProductsSpider):
             return None
         image_list = []
         base_image_url = self._parse_image(response).replace("?$product-main$", "")
+        base_image_url = urlparse.urljoin(response.url, base_image_url)
         gallery = base_image_url + '?$product_60$'
         image_list.append(gallery)
         alpha_num = string.ascii_lowercase
 
         for i in range(20):
             image_url = base_image_url + alpha_num[i] + '?$product_60$'
-            res = requests.get(image_url, timeout=10)
+            res = requests.get(image_url)
 
             if len(res.content) == 933:
                 break
@@ -222,8 +223,7 @@ class CdwSpider(BaseProductsSpider):
         shipping_phrase = response.xpath('//div[@class="long-message-block"]//text()').extract()
         return "".join(shipping_phrase).strip()
 
-    @staticmethod
-    def _parse_stock_status(response):
+    def _parse_stock_status(self, response):
         stock_value = 4
         stock_status = response.xpath('//link[@itemprop="availability"]/@href').extract()
         if stock_status:
@@ -235,7 +235,7 @@ class CdwSpider(BaseProductsSpider):
         if 'instock' in stock_status:
             stock_value = 1
 
-        if 'callforavailability' in stock_status:
+        if self._parse_shippingphrase(response) == 'Call for availability':
             stock_value = 2
 
         if 'discontinued' in stock_status:
@@ -316,7 +316,7 @@ class CdwSpider(BaseProductsSpider):
                 yield url, ProductItem()
         else:
             links = response.xpath('//div[@class="search-results"]'
-                                   '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
+                                   '//a[@class="search-result-product-url"]/@href').extract()
             for link in links:
                 url = urlparse.urljoin(response.url, link)
                 yield url, ProductItem()
