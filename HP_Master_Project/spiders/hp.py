@@ -111,10 +111,17 @@ class HpSpider(BaseProductsSpider):
         # Parse categories
         product_id = re.search("productIdValue='(.*)';", response.body)
         model_id = re.search("temp = (\d+)+", response.body)
-        if product_id:
+        model_id = model_id.group(1) if model_id else None
+
+        if not model_id:
+            model_id = re.search('retrieveBreadCrumbDetails(.*?);', response.body)
+            model_id = model_id.group(1).replace('(', '').replace(')', '') if model_id else None
+            model_id = model_id.split(',')[-1]
+
+        if product_id and model_id:
             return Request(
                 url=self.CATEGORY_URL.format(product_id=product_id.group(1),
-                                             model_id=model_id.group(1)),
+                                             model_id=model_id),
                 callback=self._parse_categories,
                 dont_filter=True,
                 meta={"product": product},
