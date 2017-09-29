@@ -1,3 +1,9 @@
+# TODO:
+# * configurable auto-tests:
+#    - various requests and their statuses (expected num of products; 'not found' products)
+#    - web-frontend and alerts for auto-tests
+#    - 'soft' alerts (sometimes something may fail but will be back to normal soon, so throw alerts only when some error is stable)
+
 import os
 import re
 import json
@@ -95,6 +101,11 @@ def _json_file_to_data(fname):
 
 
 def _extract_ranking(json_data):
+    """ Extracts and returns unordered `ranking` values.
+        The first row must be the table header.
+        Returns an empty list if no data provided,
+         None if there is any error, and the list of values otherwise.
+    """
     if not json_data:
         return []  # no data provided
     column_index = None
@@ -788,6 +799,12 @@ class BaseValidator(object):
         return True  # TODO: better validation!
 
     def _get_failed_fields(self, data, add_row_index=False):
+        """ Returns the fields with errors (and their first wrong values)
+        :param data: 2-dimensions list or str
+        :param exclude_first_line: bool
+        :param add_row_index: bool (will add Row index to every wrong value)
+        :return: dict that contains dict with fields {field_name: first_wrong_value,...} or None
+        """
         failed_fields = []
         # validate each field in the row
         optional_ok_fields = []  # put fields there if at least 1 is ok
@@ -888,3 +905,56 @@ class BaseValidator(object):
         """ Just a useful wrapper """
         return _get_spider_log_filename(self)
 
+    def errors(self):
+        """ Validates the whole item. Returns the list of failed fields or
+            None if everything is ok. """
+        found_issues = OrderedDict()
+
+        fname = _get_spider_output_filename(self)
+        data = _json_file_to_data(fname)
+
+        # check wrong values (validates every row separately)
+        failed_fields = self._get_failed_fields(data, add_row_index=True)
+
+        if failed_fields:
+            found_issues.update(failed_fields)
+
+        if ('ranking' not in self.settings.optional_fields
+                and 'ranking' not in self.settings.ignore_fields):
+            # validate ranking (to make sure no products are missing)
+            ranking_values = _extract_ranking(data)
+
+            if ranking_values is None:
+                found_issues.update(OrderedDict(ranking='field not found'))
+            if not self._check_ranking_consistency(ranking_values):
+                found_issues.update(
+                    OrderedDict(ranking='some products missing'))
+
+        log_issues = self._check_logs()
+
+        if not self.settings.ignore_log_errors:
+            if 'ERRORS' in log_issues:
+                found_issues.update(OrderedDict(log_issues='errors found'))
+
+        if not self.settings.ignore_log_duplications:
+            if 'DUPLICATIONS' in log_issues:
+                found_issues.update(
+                    OrderedDict(log_issues='duplicated requests found'))
+
+        if getattr(self.settings, 'ignore_log_duplications_and_ranking_gaps', None):
+            # remove notifications about missing products and duplications
+            found_issues.pop('ranking', None)
+            found_issues.pop('log_issues', None)
+
+        if not self.settings.ignore_log_filtered:
+            if 'FILTERED' in log_issues:
+                found_issues.update(
+                    OrderedDict(log_issues='offsite filtered requests found'))
+
+        return found_issues if found_issues else None
+
+    def errors_html(self):
+        errors = self.errors()
+        if not errors:
+            errors = {}
+        return errors_to_html(errors)

@@ -166,16 +166,22 @@ class ZonesSpider(BaseProductsSpider):
         stock_value = 4
 
         try:
-            stock_message = re.search("<stockMessage>(.*)</stockMessage>", response.body).group(1)
+            stock_message = re.search("<stockMessage>(.*)</stockMessage>", response.body)
+            if stock_message:
+                stock_message = stock_message.group(1)
 
-            if stock_message.lower() == 'in stock':
-                stock_value = 1
-            if stock_message.lower() == 'out of stock':
-                stock_value = 0
-            if stock_message.lower() == 'call for availability':
-                stock_value = 2
-            if stock_message.lower() == 'discontinued':
-                stock_value = 3
+                if stock_message.lower() == 'in stock':
+                    stock_value = 1
+                elif stock_message.lower() == 'out of stock':
+                    stock_value = 0
+                elif stock_message.lower() == 'call for availability':
+                    stock_value = 2
+                elif stock_message.lower() == 'discontinued':
+                    stock_value = 3
+                else:
+                    stock_value = 4
+            else:
+                stock_value = 4
 
             product['productstockstatus'] = stock_value
             return product
