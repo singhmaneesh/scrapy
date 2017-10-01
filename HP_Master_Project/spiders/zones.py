@@ -108,7 +108,7 @@ class ZonesSpider(BaseProductsSpider):
         product['price'] = price
 
         # Parse sale price
-        product['saleprice'] = self._parse_sale_price(response)
+        product['saleprice'] = price
 
         # Parse retailer_key
         retailer_key = self._parse_retailer_key(response)
@@ -211,13 +211,6 @@ class ZonesSpider(BaseProductsSpider):
         price = response.xpath('//span[@class="prod-price"]/text()').extract()
         if price:
             return float(price[0].replace("$", "").replace(",", ""))
-
-    def _parse_sale_price(self, response):
-        if self._parse_stock_status(response)['productstockstatus'] == 2:
-            return self._parse_price(response)
-        else:
-            sale_price = self._parse_price(response) - 25.00
-            return sale_price
 
     def _parse_retailer_key(self, response):
         retailer_key = response.xpath('//span[@id="item_no_id"]/text()').extract()
