@@ -45,5 +45,3 @@ selenium
 xvfbwrapper
 bsddb3
 scrapy-deltafetch
-fake_useragent
-requests
