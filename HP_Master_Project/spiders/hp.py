@@ -4,12 +4,13 @@ from __future__ import absolute_import, division, unicode_literals
 from scrapy.log import WARNING
 from scrapy import Request
 import re
-import urlparse
-import traceback
+import requests
+import json
 
 from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class HpSpider(BaseProductsSpider):
@@ -23,6 +24,10 @@ class HpSpider(BaseProductsSpider):
                    "&searchTerm={search_term}&searchType=" \
                    "&searchTermScope=&pageSize=12&isAjax=true&beginIndex={begin_index}" \
                    "&subCatFacet=&orderBy=99&pagingOnly=true"
+
+    API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+              '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
+              '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
     CATEGORY_URL = "http://store.hp.com/webapp/wcs/stores/servlet/HPBreadCrumbView?productId={product_id}" \
                    "&langId=-1&storeId=10151&catalogId=10051&urlLangId=-1&modelId={model_id}"
@@ -106,10 +111,17 @@ class HpSpider(BaseProductsSpider):
         # Parse categories
         product_id = re.search("productIdValue='(.*)';", response.body)
         model_id = re.search("temp = (\d+)+", response.body)
-        if product_id:
+        model_id = model_id.group(1) if model_id else None
+
+        if not model_id:
+            model_id = re.search('retrieveBreadCrumbDetails(.*?);', response.body)
+            model_id = model_id.group(1).replace('(', '').replace(')', '') if model_id else None
+            model_id = model_id.split(',')[-1]
+
+        if product_id and model_id:
             return Request(
                 url=self.CATEGORY_URL.format(product_id=product_id.group(1),
-                                             model_id=model_id.group(1)),
+                                             model_id=model_id),
                 callback=self._parse_categories,
                 dont_filter=True,
                 meta={"product": product},
@@ -223,6 +235,10 @@ class HpSpider(BaseProductsSpider):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
+
         totals = response.xpath('//div[@class="searchCount"]/span[@class="searchTotal"]'
                                 '/text()').extract()
         if totals:
@@ -235,23 +251,31 @@ class HpSpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        try:
+        link_list = []
+        if self.retailer_id:
+            data = json.loads(response.body)
+            for link in data:
+                link = link['product_link']
+                link_list.append(link)
+            for link in link_list:
+                yield link, ProductItem()
+        else:
             links = response.xpath('//div[@class="productWrapper"]'
                                    '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()
 
+            links = [response.urljoin(x) for x in links]
+
             for link in links:
-                url = urlparse.urljoin(response.url, link)
-                yield url, ProductItem()
-        except:
-            self.log("Found no product links {}".format(traceback.format_exc()))
-            yield None
+                yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        page_count = self.TOTAL_MATCHES / response.meta['scraped_results_per_page'] + 1
+        if self.retailer_id:
+            return None
+        page_count = int(self.TOTAL_MATCHES / 12 + 1)
         search_term = response.meta['search_term']
         self.current_page += 1
 
-        begin_index = self.current_page * response.meta['scraped_results_per_page']
+        begin_index = self.current_page * 12
 
         if self.current_page <= page_count:
             next_page = self.PAGINATE_URL.format(search_term=search_term, begin_index=begin_index)

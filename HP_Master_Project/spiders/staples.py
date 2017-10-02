@@ -1,17 +1,19 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-from scrapy import Request, FormRequest
+from scrapy import Request
 from scrapy.log import WARNING
 import urlparse
 import json
 import re
 import time
 import traceback
+import requests
 
-from HP_Master_Project.utils import clean_text, clean_list
+from HP_Master_Project.utils import clean_text
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class StaplesSpider(BaseProductsSpider):
@@ -47,15 +49,14 @@ class StaplesSpider(BaseProductsSpider):
         self.is_category = False
         super(StaplesSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
-        self.user_agent = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/56.0.2924.87 Safari/537.36")
+        self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
+                          "Chrome/60.0.3112.105 Safari/537.36 Vivaldi/1.92.917.43"
+        self.retailer_check = False
 
     def start_requests(self):
         for request in super(StaplesSpider, self).start_requests():
             if not self.product_url:
                 request = request.replace(callback=self.parse_search)
-            if self.retailer_id:
-                request = request.replace(callback=self.parse)
             yield request
 
     def parse_search(self, response):
@@ -104,6 +105,9 @@ class StaplesSpider(BaseProductsSpider):
             self.log("Website under maintenance error, retrying request: {}".format(response.url), WARNING)
             return Request(response.url, callback=self.parse_product, meta=response.meta, dont_filter=True)
 
+        if response.status == 429:
+            response = requests.get(url=response.url, timeout=5)
+
         # Parse name
         name = self._parse_name(response)
         product['name'] = name
@@ -149,10 +153,6 @@ class StaplesSpider(BaseProductsSpider):
         # Parse ship to store
         ship_to_store = self._parse_shiptostore(response)
         product['shiptostore'] = ship_to_store
-
-        # Parse shipping phrase
-        shipping_phrase = self._parse_shippingphrase(response)
-        product['shippingphrase'] = shipping_phrase
 
         # Parse gallery
         product['gallery'] = self._parse_gallery(response)
@@ -251,6 +251,8 @@ class StaplesSpider(BaseProductsSpider):
                 product['productstockstatus'] = 1
 
             product['price'] = jsonresponse['pricing']['nowPrice']
+            if not product['price']:
+                product['price'] = jsonresponse['pricing']['finalPrice']
             product['saleprice'] = jsonresponse['pricing']['finalPrice']
             return product
 
@@ -288,10 +290,6 @@ class StaplesSpider(BaseProductsSpider):
         except Exception as e:
             self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
             return None
-
-    @staticmethod
-    def _parse_shippingphrase(response):
-        return None
 
     def _parse_features(self, response):
         try:
@@ -353,6 +351,7 @@ class StaplesSpider(BaseProductsSpider):
             return 0
 
     def _scrape_product_links(self, response):
+        link_data = []
         links = response.xpath('//a[contains(@property, "url")]/@href').extract()
 
         if not links:
@@ -360,17 +359,18 @@ class StaplesSpider(BaseProductsSpider):
                                    '/a[contains(@class, "product-title")]/@href').extract()
         if not links:
             links = response.xpath('//a[@class="product-title scTrack pfm"]/@href').extract()
+        link_data.extend(links)
 
         if self.retailer_id:
             data = json.loads(response.body)
             link_list = data
             for link in link_list:
                 link = link['product_link']
-                links.append(link)
+                link_data.append(link)
 
-        links = [urlparse.urljoin(response.url, x) for x in links]
+        link_data = [urlparse.urljoin(response.url, x) for x in link_data]
 
-        for link in links:
+        for link in link_data:
             yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):

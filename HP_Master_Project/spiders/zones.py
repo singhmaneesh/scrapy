@@ -6,11 +6,13 @@ from scrapy.log import WARNING
 import re
 import time
 import json
+import requests
 from scrapy.conf import settings
 
 from HP_Master_Project.utils import clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class ZonesSpider(BaseProductsSpider):
@@ -38,6 +40,7 @@ class ZonesSpider(BaseProductsSpider):
         self.user_agent = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                            "Chrome/60.0.3112.90 Safari/537.36")
         settings.overrides['DOWNLOADER_CLIENTCONTEXTFACTORY'] = 'HP_Master_Project.utils.TLSFlexibleContextFactory'
+        self.retailer_check = False
 
     def start_requests(self):
         for request in super(ZonesSpider, self).start_requests():
@@ -105,7 +108,7 @@ class ZonesSpider(BaseProductsSpider):
         product['price'] = price
 
         # Parse sale price
-        product['saleprice'] = self._parse_sale_price(response)
+        product['saleprice'] = price
 
         # Parse retailer_key
         retailer_key = self._parse_retailer_key(response)
@@ -163,16 +166,22 @@ class ZonesSpider(BaseProductsSpider):
         stock_value = 4
 
         try:
-            stock_message = re.search("<stockMessage>(.*)</stockMessage>", response.body).group(1)
+            stock_message = re.search("<stockMessage>(.*)</stockMessage>", response.body)
+            if stock_message:
+                stock_message = stock_message.group(1)
 
-            if stock_message.lower() == 'in stock':
-                stock_value = 1
-            if stock_message.lower() == 'out of stock':
-                stock_value = 0
-            if stock_message.lower() == 'call for availability':
-                stock_value = 2
-            if stock_message.lower() == 'discontinued':
-                stock_value = 3
+                if stock_message.lower() == 'in stock':
+                    stock_value = 1
+                elif stock_message.lower() == 'out of stock':
+                    stock_value = 0
+                elif stock_message.lower() == 'call for availability':
+                    stock_value = 2
+                elif stock_message.lower() == 'discontinued':
+                    stock_value = 3
+                else:
+                    stock_value = 4
+            else:
+                stock_value = 4
 
             product['productstockstatus'] = stock_value
             return product
@@ -202,13 +211,6 @@ class ZonesSpider(BaseProductsSpider):
         price = response.xpath('//span[@class="prod-price"]/text()').extract()
         if price:
             return float(price[0].replace("$", "").replace(",", ""))
-
-    def _parse_sale_price(self, response):
-        if self._parse_stock_status(response)['productstockstatus'] == 2:
-            return self._parse_price(response)
-        else:
-            sale_price = self._parse_price(response) - 25.00
-            return sale_price
 
     def _parse_retailer_key(self, response):
         retailer_key = response.xpath('//span[@id="item_no_id"]/text()').extract()
@@ -243,6 +245,9 @@ class ZonesSpider(BaseProductsSpider):
         return str_result.replace("\t", "").replace("\n", "").replace("\r", "").replace(u'\xa0', ' ').strip()
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = response.xpath('//div[@class="serp-item-count"]').extract()
         if totals:
             totals = totals[0]
@@ -252,23 +257,21 @@ class ZonesSpider(BaseProductsSpider):
                 if totals.isdigit():
                     return int(totals)
 
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
-
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
-                               '/a[@class="title"]/@href').extract()
-
-        if not links:
-            data = json.loads(response.body)
+        link_data = []
+        if self.retailer_id:
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
             link_list = data
             for link in link_list:
                 link = link['product_link']
-                links.append(link)
-
-        for link in links:
-            yield link, ProductItem()
+                link_data.append(link)
+            for link in link_data:
+                yield link, ProductItem()
+        else:
+            links = response.xpath('//div[contains(@class, "serp-results")]/div[@class="product"]'
+                                   '/a[@class="title"]/@href').extract()
+            for link in links:
+                yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:

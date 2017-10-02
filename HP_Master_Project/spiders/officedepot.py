@@ -2,7 +2,6 @@ from __future__ import division, absolute_import, unicode_literals
 
 import json
 import re
-import socket
 import urlparse
 import string
 
@@ -14,6 +13,7 @@ from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider, cond_set, \
     cond_set_value
 from HP_Master_Project.utils import is_empty
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class OfficedepotProductsSpider(BaseProductsSpider):
@@ -37,7 +37,6 @@ class OfficedepotProductsSpider(BaseProductsSpider):
     def __init__(self, *args, **kwargs):
         self.user_agent = ('Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36'
                            ' (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36')
-        socket.setdefaulttimeout(60)
         super(OfficedepotProductsSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
 
@@ -84,6 +83,10 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         # Parse model
         model = self._parse_model(response)
         cond_set_value(product, 'model', model)
+
+        # Parse gallery
+        gallery = self._parse_gallery(response)
+        product['gallery'] = gallery
 
         # Parse stock status
         oos = self._parse_product_stock_status(response)
@@ -149,6 +152,20 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             '//*[@id="attributemodel_namekey"]/text()').extract()
         if model:
             return model[0].strip()
+
+    @staticmethod
+    def _parse_gallery(response):
+        image_list = []
+        if response.xpath('//script[@id="skuImageData"]/text()'):
+            image_data = response.xpath('//script[@id="skuImageData"]/text()')[0].extract()
+            image_data = json.loads(image_data)
+            image_len = len(image_data)
+            for i in range(image_len):
+                image_url = 'http://s7d1.scene7.com/is/image/officedepot/' + image_data['image_' + str(i)]
+                image_list.append(image_url)
+        if image_list:
+            return image_list
+        return None
 
     @staticmethod
     def _parse_categories(response):
@@ -258,6 +275,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         if self.retailer_id:
             data = json.loads(response.body)
             return len(data)
+
         totals = response.xpath('//div[contains(@id, "resultCnt")]/text()').extract()
         if totals:
             totals = totals[0].replace(',', '').replace('.', '').strip()
@@ -275,21 +293,22 @@ class OfficedepotProductsSpider(BaseProductsSpider):
                 yield req_or_prod
 
     def _scrape_product_links(self, response):
-        links = []
+        link_list = []
         if self.retailer_id:
             data = json.loads(response.body)
-            link_list = data
-            for link in link_list:
+            for link in data:
                 link = link['product_link']
                 if 'officedepot' in link:
-                    links.append(link)
+                    link_list.append(link)
+            for link in link_list:
+                yield link, ProductItem()
         else:
             links = response.xpath(
                 '//div[contains(@class, "descriptionFull")]//a[contains(@class, "med_txt")]/@href'
             ).extract() or response.css('.desc_text a::attr("href")').extract()
 
-        for link in links:
-            yield link, ProductItem()
+            for link in links:
+                yield link, ProductItem()
 
     def _get_nao(self, url):
         nao = re.search(r'nao=(\d+)', url)
@@ -312,7 +331,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             return
 
         if self.CURRENT_NAO > self.quantity + self.PAGINATE_BY:
-            return  # num_products > quantity
+            return
         self.CURRENT_NAO += self.PAGINATE_BY
         if '/a/browse/' in response.url:    # paginate in category or subcategory
             new_paginate_url = self.parse_paginate_link(response, self.CURRENT_NAO)

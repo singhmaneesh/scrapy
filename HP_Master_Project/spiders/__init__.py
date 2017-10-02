@@ -214,7 +214,6 @@ class BaseProductsSpider(Spider):
             self.scrape_variants_with_extra_requests = True
 
         if product_url is None:  # searchterms mode
-            # see https://bugzilla.contentanalyticsinc.com/show_bug.cgi?id=3585#c10
             self.scrape_variants_with_extra_requests = False
 
         try:
@@ -255,10 +254,6 @@ class BaseProductsSpider(Spider):
             with open(searchterms_fn, encoding='utf-8') as f:
                 self.searchterms = f.readlines()
 
-        # notify QA's about sqs-tools jobs
-        if 'slack_username' in kwargs:
-            self.slack_username = kwargs.get('slack_username')
-
         self.log("Created for %s with %d search terms."
                  % (self.site_name, len(self.searchterms)), INFO)
 
@@ -279,14 +274,24 @@ class BaseProductsSpider(Spider):
                 meta={'search_term': '', 'remaining': self.quantity}
             )
 
-        for st in self.searchterms:
-            yield Request(
-                self.url_formatter.format(
-                    self.SEARCH_URL,
-                    search_term=urllib.quote_plus(st.encode('utf-8')),
-                ),
-                meta={'search_term': st, 'remaining': self.quantity},
-            )
+        if self.searchterms:
+            if self.retailer_id:
+                yield Request(
+                    self.url_formatter.format(
+                        self.API_URL,
+                        retailer_id=self.retailer_id,
+                    ),
+                    meta={'search_term': '', 'remaining': self.quantity}
+                )
+            else:
+                for st in self.searchterms:
+                    yield Request(
+                        self.url_formatter.format(
+                            self.SEARCH_URL,
+                            search_term=urllib.quote_plus(st.encode('utf-8')),
+                        ),
+                        meta={'search_term': st, 'remaining': self.quantity},
+                    )
 
         if self.product_url:
             prod = ProductItem()

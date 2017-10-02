@@ -4,10 +4,12 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 import urlparse
 import json
+import requests
 
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class ConnectionSpider(BaseProductsSpider):
@@ -32,6 +34,7 @@ class ConnectionSpider(BaseProductsSpider):
         super(ConnectionSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
         self.current_page = 1
+        self.retailer_check = False
 
     def _parse_single_product(self, response):
         return self.parse_product(response)
@@ -224,6 +227,9 @@ class ConnectionSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
         totals = re.search('of (\d+) Results', response.body)
         if totals:
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
@@ -231,9 +237,6 @@ class ConnectionSpider(BaseProductsSpider):
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
                 return int(totals)
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
 
     def _scrape_results_per_page(self, response):
         if self.retailer_id:
@@ -247,18 +250,20 @@ class ConnectionSpider(BaseProductsSpider):
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
-
-        if not links:
+        link_list = []
+        if self.retailer_id:
             data = json.loads(response.body)
-            link_list = data
-            for link in link_list:
+            for link in data:
                 link = link['product_link']
-                links.append(link)
-
-        for link in links:
-            url = urlparse.urljoin(response.url, link)
-            yield url, ProductItem()
+                link_list.append(link)
+            for link in link_list:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
+        else:
+            links = response.xpath('//div[@class="product-name-list"]/a/@href').extract()
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:

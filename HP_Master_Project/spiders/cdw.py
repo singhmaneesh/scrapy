@@ -10,6 +10,7 @@ from scrapy import Request
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider, FormatterWithDefaults
+from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class CdwSpider(BaseProductsSpider):
@@ -150,8 +151,7 @@ class CdwSpider(BaseProductsSpider):
         if name:
             return name[0]
 
-    @staticmethod
-    def _parse_brand(response):
+    def _parse_brand(self, response):
         brand = response.xpath('//span[@itemprop="brand"]/text()').extract()
         if not brand:
             brand = response.xpath('//span[@class="brand"]/text()').extract()
@@ -181,13 +181,14 @@ class CdwSpider(BaseProductsSpider):
             return None
         image_list = []
         base_image_url = self._parse_image(response).replace("?$product-main$", "")
+        base_image_url = urlparse.urljoin(response.url, base_image_url)
         gallery = base_image_url + '?$product_60$'
         image_list.append(gallery)
         alpha_num = string.ascii_lowercase
 
         for i in range(20):
             image_url = base_image_url + alpha_num[i] + '?$product_60$'
-            res = requests.get(image_url, timeout=10)
+            res = requests.get(image_url)
 
             if len(res.content) == 933:
                 break
@@ -222,8 +223,7 @@ class CdwSpider(BaseProductsSpider):
         shipping_phrase = response.xpath('//div[@class="long-message-block"]//text()').extract()
         return "".join(shipping_phrase).strip()
 
-    @staticmethod
-    def _parse_stock_status(response):
+    def _parse_stock_status(self, response):
         stock_value = 4
         stock_status = response.xpath('//link[@itemprop="availability"]/@href').extract()
         if stock_status:
@@ -235,7 +235,7 @@ class CdwSpider(BaseProductsSpider):
         if 'instock' in stock_status:
             stock_value = 1
 
-        if 'callforavailability' in stock_status:
+        if self._parse_shippingphrase(response) == 'Call for availability':
             stock_value = 2
 
         if 'discontinued' in stock_status:
@@ -281,6 +281,10 @@ class CdwSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
+        if self.retailer_id:
+            data = json.loads(response.body)
+            return len(data)
+
         totals = re.search("'search_results_count':'(\d+)',", response.body)
         if totals:
             totals = totals.group(1).replace(',', '').replace('.', '').strip()
@@ -288,9 +292,6 @@ class CdwSpider(BaseProductsSpider):
                 if not self.TOTAL_MATCHES:
                     self.TOTAL_MATCHES = int(totals)
                 return int(totals)
-        if self.retailer_id:
-            data = json.loads(response.body)
-            return len(data)
 
     def _scrape_results_per_page(self, response):
         if self.retailer_id:
@@ -304,19 +305,21 @@ class CdwSpider(BaseProductsSpider):
                 return int(result_per_page)
 
     def _scrape_product_links(self, response):
-        links = response.xpath('//div[@class="search-results"]'
-                               '/div[@class="search-result"]//a[@class="search-result-product-url"]/@href').extract()
-
-        if not links:
-            data = json.loads(response.body)
-            link_list = data
-            for link in link_list:
+        link_list = []
+        if self.retailer_id:
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+            for link in data:
                 link = link['product_link']
-                links.append(link)
-
-        for link in links:
-            url = urlparse.urljoin(response.url, link)
-            yield url, ProductItem()
+                link_list.append(link)
+            for link in link_list:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
+        else:
+            links = response.xpath('//div[@class="search-results"]'
+                                   '//a[@class="search-result-product-url"]/@href').extract()
+            for link in links:
+                url = urlparse.urljoin(response.url, link)
+                yield url, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
