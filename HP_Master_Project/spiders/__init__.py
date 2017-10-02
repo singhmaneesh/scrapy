@@ -358,7 +358,6 @@ class BaseProductsSpider(Spider):
         scraped_results_per_page = response.meta.get('scraped_results_per_page')
 
         prods = self._scrape_product_links(response)
-
         if prods_per_page is None:
             # Materialize prods to get its size.
             prods = list(prods)
@@ -411,6 +410,10 @@ class BaseProductsSpider(Spider):
             if prod_url is None:
                 # The product is complete, no need for another request.
                 yield prod_item
+            elif isinstance(prod_url, Request) and prod_url.meta.get("fire"):
+                prod_url.callback = self.parse_product
+                prod_url.meta.update({'product': prod_item})
+                yield prod_url
             elif isinstance(prod_url, Request):
                 cond_set_value(prod_item, 'link', prod_url.url)  # Tentative.
                 yield prod_url
