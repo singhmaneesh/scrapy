@@ -8,6 +8,7 @@ import re
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
 
+
 class EnUsInsightSpider(BaseProductsSpider):
     name = 'en-us_insight'
     allowed_domains = ['insight.com']
@@ -125,7 +126,7 @@ class EnUsInsightSpider(BaseProductsSpider):
                 next_page_request = scrapy.Request(url=self.products_api, method='POST', body=payload, dont_filter=True,
                                                headers={'Content-Type': 'application/json'}, meta=response.meta)
             else:
-                payload = json.dumps(self.get_next_products_payload(page=current_page + 1))
+                payload = json.dumps(self.get_next_products_payload(page=1))
                 next_page_request = scrapy.Request(url=self.products_api, method='POST', body=payload, dont_filter=True,
                                                    headers={'Content-Type': 'application/json'}, meta=response.meta)
         return next_page_request
@@ -149,26 +150,29 @@ class EnUsInsightSpider(BaseProductsSpider):
 
 
     def parse_product_item(self, json_response, product):
-        product["name"] = json_response["webProduct"]["description"]
-        product["link"] = self.get_product_url(json_response)
-        product["image"] = json_response["webProduct"]["image"]["largeImage"]
-        product["categories"] = json_response["webProduct"]["categoryLabel"]
-        product["model"] = json_response["webProduct"]["modelName"]
-        product["price"] = float(json_response["webProduct"]["prices"][0]["price"])
-        product["saleprice"] = float(json_response["webProduct"]["prices"][0]["price"])
-        product["currencycode"] = json_response["webProduct"]["prices"][0]["currency"]
-        product["locale"] = json_response["webProduct"]["localeDefaults"]["id"]["locale"]
-        product["manufacturer"] = json_response["webProduct"]["manufacturerName"]
-        product["brand"] = json_response["webProduct"]["manufacturerName"]
-        product["features"] = self.get_product_features(json_response)
-        product["retailer_key"] = json_response["webProduct"]["materialId"]
-        product["sku"] = json_response["webProduct"]["materialId"]
-        product["ean"] = json_response["webProduct"]["unspscCode"]
-        product["unspsc"] = json_response["webProduct"]["unspscCode"]
-        product["productstockstatus"] = self.get_availability(json_response)
-        product["instore"] = 1
-        product["condition"] = 1
-        return product
+        if json_response.get("webProduct"):
+            product["name"] = json_response["webProduct"]["description"]
+            product["link"] = self.get_product_url(json_response)
+            product["image"] = json_response["webProduct"]["image"]["largeImage"]
+            product["categories"] = json_response["webProduct"]["categoryLabel"]
+            product["model"] = json_response["webProduct"]["modelName"]
+            product["price"] = float(json_response["webProduct"]["prices"][0]["price"])
+            product["saleprice"] = float(json_response["webProduct"]["prices"][0]["price"])
+            product["currencycode"] = json_response["webProduct"]["prices"][0]["currency"]
+            product["locale"] = json_response["webProduct"]["localeDefaults"]["id"]["locale"]
+            product["manufacturer"] = json_response["webProduct"]["manufacturerName"]
+            product["brand"] = json_response["webProduct"]["manufacturerName"]
+            product["features"] = self.get_product_features(json_response)
+            product["retailer_key"] = json_response["webProduct"]["materialId"]
+            product["sku"] = json_response["webProduct"]["materialId"]
+            product["ean"] = json_response["webProduct"]["unspscCode"]
+            product["unspsc"] = json_response["webProduct"]["unspscCode"]
+            product["productstockstatus"] = self.get_availability(json_response)
+            product["instore"] = 1
+            product["condition"] = 1
+            return product
+        else:
+            return None
 
     def get_availability(self, json_response):
         if not json_response["webProduct"]["availabilityInfos"][0]["stockAvailability"] and \
