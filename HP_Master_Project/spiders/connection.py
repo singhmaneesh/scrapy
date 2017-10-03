@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 import re
 import urlparse
+import math
 import json
-import requests
 
 from HP_Master_Project.utils import extract_first, clean_text, clean_list
 from HP_Master_Project.items import ProductItem
@@ -268,11 +268,11 @@ class ConnectionSpider(BaseProductsSpider):
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
             return None
-        page_count = self.TOTAL_MATCHES / self.RESULT_PER_PAGE + 1
 
         self.current_page += 1
 
-        if self.current_page <= page_count:
+        if (self.TOTAL_MATCHES and self.RESULT_PER_PAGE and
+                    self.current_page < math.ceil(self.TOTAL_MATCHES / float(self.RESULT_PER_PAGE))):
             next_page = self.Paginate_URL.format(page_num=self.current_page,
                                                  result_per_page=self.RESULT_PER_PAGE)
             return next_page

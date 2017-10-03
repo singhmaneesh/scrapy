@@ -6,6 +6,7 @@ from scrapy.log import WARNING
 import re
 import time
 import json
+import math
 import requests
 from scrapy.conf import settings
 
@@ -278,26 +279,30 @@ class ZonesSpider(BaseProductsSpider):
             return None
 
         meta = response.meta
+
+        total_matches = self._scrape_total_matches(response)
+        results_per_page = self._scrape_results_per_page(response)
+
         current_page = meta.get('current_page')
         if not current_page:
             current_page = 1
 
-        if current_page * response.meta['scraped_results_per_page'] >= response.meta['total_matches']:
-            return
-        current_page += 1
-        meta['current_page'] = current_page
+        if (total_matches and results_per_page and
+                    current_page < math.ceil(total_matches / float(results_per_page))):
+            current_page += 1
+            meta['current_page'] = current_page
 
-        return FormRequest(
-            url=self.PAGINATE_URL,
-            formdata={
-              "searchType": "browse_search",
-              "submit_name": "select_compare_form",
-              "page_number": str(current_page),
-              "partner_id": "",
-              "compareChecks": "",
-              "compare_maxed": ""
-            },
-            dont_filter=True,
-            headers=self.HEADERS,
-            meta=meta
-        )
+            return FormRequest(
+                url=self.PAGINATE_URL,
+                formdata={
+                  "searchType": "browse_search",
+                  "submit_name": "select_compare_form",
+                  "page_number": str(current_page),
+                  "partner_id": "",
+                  "compareChecks": "",
+                  "compare_maxed": ""
+                },
+                dont_filter=True,
+                headers=self.HEADERS,
+                meta=meta
+            )

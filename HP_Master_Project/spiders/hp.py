@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, unicode_literals
 from scrapy.log import WARNING
 from scrapy import Request
 import re
-import requests
 import json
+import math
 
 from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
@@ -271,12 +271,12 @@ class HpSpider(BaseProductsSpider):
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
             return None
-        page_count = int(self.TOTAL_MATCHES / 12 + 1)
+
         search_term = response.meta['search_term']
         self.current_page += 1
 
         begin_index = self.current_page * 12
 
-        if self.current_page <= page_count:
+        if self.current_page < math.ceil(self.TOTAL_MATCHES / 12.0):
             next_page = self.PAGINATE_URL.format(search_term=search_term, begin_index=begin_index)
             return next_page
