@@ -60,15 +60,18 @@ class EnUsInsightSpider(BaseProductsSpider):
 
     def _scrape_product_links(self, response):
         self.logger.info("Start parsing products response")
-        link_list = []
         if self.retailer_id:
             data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
-            for link in data:
-                link = link['product_link']
-                link_list.append(link)
-            for link in link_list:
-                # url = urlparse.urljoin(response.url, link)
-                yield link, ProductItem()
+            for item in data:
+                link = item['product_link']
+                mfr_id = self.get_mfr_part_num_from_url(link)
+                payload = json.dumps(self.get_product_payload(data, mfr_id))
+                meta = response.meta
+                meta['fire'] = True
+                product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, meta=meta,
+                                                 headers={'Content-Type': 'application/json'},
+                                                 callback=self.parse, dont_filter=True)
+                yield product_request, ProductItem()
         else:
             try:
                 json_response = json.loads(response.body.decode("utf-8", "ignore"))
@@ -151,14 +154,12 @@ class EnUsInsightSpider(BaseProductsSpider):
     def parse_product(self, response):
         meta = response.meta.copy()
         product = meta.get('product', ProductItem())
-        print(response.body)
-        exit(0)
         try:
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
         except Exception as e:
-            self.logger.error(e.message+ "haha")
+            self.logger.error(e.message)
         else:
             return self.parse_product_item(json_response, product)
 
