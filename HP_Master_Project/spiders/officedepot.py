@@ -286,7 +286,8 @@ class OfficedepotProductsSpider(BaseProductsSpider):
 
     def _get_products(self, response):
         if "officedepot.com/a/products" in response.url:
-            prod = ProductItem(search_redirected_to_product=True)
+            response.meta['product'] = {}
+            prod = self.parse_product(response)
             yield prod
         else:
             for req_or_prod in super(OfficedepotProductsSpider, self)._get_products(response):
