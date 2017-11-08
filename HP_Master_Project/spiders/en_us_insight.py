@@ -3,7 +3,7 @@ import scrapy
 import json
 import urlparse
 import urllib
-import re
+import re, requests
 
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
@@ -32,8 +32,6 @@ class EnUsInsightSpider(BaseProductsSpider):
         for request in super(EnUsInsightSpider, self).start_requests():
             if not self.product_url:
                 request = request.replace(callback=self.parse_search)
-            if self.retailer_id:
-                request = request.replace(callback=self.parse)
             yield request
 
 
@@ -60,36 +58,49 @@ class EnUsInsightSpider(BaseProductsSpider):
 
     def _scrape_product_links(self, response):
         self.logger.info("Start parsing products response")
-        try:
-            json_response = json.loads(response.body.decode("utf-8", "ignore"))
-        except TypeError as e:
-            self.logger.error(e.message + "Json respone cannot be parsed")
-        except Exception as e:
-            self.logger.error(e.message)
+        if self.retailer_id:
+            data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
+            for item in data:
+                link = item['product_link']
+                mfr_id = self.get_mfr_part_num_from_url(link)
+                payload = json.dumps(self.get_product_payload(data, mfr_id))
+                meta = response.meta
+                meta['fire'] = True
+                product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, meta=meta,
+                                                 headers={'Content-Type': 'application/json'},
+                                                 callback=self.parse, dont_filter=True)
+                yield product_request, ProductItem()
         else:
             try:
-                num_products = int(json_response["shown"])
-            except:
-                if json_response:
-                    for item in json_response:
-                        mfr_part_id = self.get_mfr_part_num_from_url(item["product_link"])
+                json_response = json.loads(response.body.decode("utf-8", "ignore"))
+            except TypeError as e:
+                self.logger.error(e.message + "Json respone cannot be parsed")
+            except Exception as e:
+                self.logger.error(e.message)
+            else:
+                try:
+                    num_products = int(json_response["shown"])
+                except:
+                    if json_response:
+                        for item in json_response:
+                            mfr_part_id = self.get_mfr_part_num_from_url(item["product_link"])
+                            payload = json.dumps(self.get_product_payload(json_response, mfr_part_id))
+                            meta = response.meta
+                            meta['fire'] = True
+                            product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, meta=meta,
+                                                             headers={'Content-Type': 'application/json'},
+                                                             callback = self.parse, dont_filter = True)
+                            yield product_request, ProductItem()
+                else:
+                    for i in range(num_products):
+                        mfr_part_id = json_response["nugsProducts"][i]["manufacturerPartNumber"]
                         payload = json.dumps(self.get_product_payload(json_response, mfr_part_id))
                         meta = response.meta
                         meta['fire'] = True
-                        product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, meta=meta,
+                        product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, dont_filter=True,
                                                          headers={'Content-Type': 'application/json'},
-                                                         callback = self.parse, dont_filter = True)
+                                                         meta=meta, callback=self.parse, )
                         yield product_request, ProductItem()
-            else:
-                for i in range(num_products):
-                    mfr_part_id = json_response["nugsProducts"][i]["manufacturerPartNumber"]
-                    payload = json.dumps(self.get_product_payload(json_response, mfr_part_id))
-                    meta = response.meta
-                    meta['fire'] = True
-                    product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, dont_filter=True,
-                                                     headers={'Content-Type': 'application/json'},
-                                                     meta=meta, callback=self.parse, )
-                    yield product_request, ProductItem()
 
 
     def _scrape_total_matches(self, response):
@@ -112,6 +123,8 @@ class EnUsInsightSpider(BaseProductsSpider):
 
 
     def _scrape_next_results_page_link(self, response):
+        if self.retailer_id:
+            return None
         next_page_request = None
         try:
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
