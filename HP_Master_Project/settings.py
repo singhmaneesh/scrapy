@@ -17,9 +17,9 @@ SPIDER_MODULES = ['HP_Master_Project.spiders']
 NEWSPIDER_MODULE = 'HP_Master_Project.spiders'
 ITEM_PIPLINES = {'HP_Master_Project.CSVPipeline': 300}
 
-SPIDER_MIDDLEWARES = {
-    'scrapy_deltafetch.DeltaFetch': 100,
-}
+# SPIDER_MIDDLEWARES = {
+#     'scrapy_deltafetch.DeltaFetch': 100,
+# }
 
 DELTAFETCH_ENABLED = True
 
