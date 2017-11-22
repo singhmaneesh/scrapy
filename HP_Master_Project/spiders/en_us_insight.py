@@ -30,39 +30,14 @@ class EnUsInsightSpider(BaseProductsSpider):
 
     def start_requests(self):
         for request in super(EnUsInsightSpider, self).start_requests():
-            print dir(request)
-            print request.meta
-            print request.callback
-
-            # yield request
-
-            #     print request.url
-            # exit(0)
+            if self.searchterms:
+                yield request
             if not self.product_url:
                 request = request.replace(callback=self.parse_search)
-                request.meta['search_term'] = request.meta.get('search_term')
-
             yield request
 
 
     def parse_search(self, response):
-        search_term = response.meta.get('search_term')
-        print dir(response)
-        print response.meta
-        exit(0)
-        payload = json.dumps(self.get_next_products_payload(page=1))
-        if search_term:
-            payload = json.dumps(self.get_next_products_payload(page=1, search_keyword=search_term))
-        print payload
-        # exit(0)
-        self.current_page+=1
-        return [scrapy.Request(url=self.products_api, method='POST', body=payload,
-                               headers={'Content-Type': 'application/json'}, meta=response.meta)]
-
-    def parse_search_term(self, response):
-        print dir(response)
-        print response.meta
-        exit(0)
         payload = json.dumps(self.get_next_products_payload(page=1))
         self.current_page+=1
         return [scrapy.Request(url=self.products_api, method='POST', body=payload,
@@ -75,6 +50,8 @@ class EnUsInsightSpider(BaseProductsSpider):
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
+        except ValueError as e:
+            self.logger.debug(e.message)
         else:
             try:
                 result_per_page = int(json_response["shown"])
@@ -97,6 +74,15 @@ class EnUsInsightSpider(BaseProductsSpider):
                                                  headers={'Content-Type': 'application/json'},
                                                  callback=self.parse, dont_filter=True)
                 yield product_request, ProductItem()
+        elif self.searchterms:
+            search_term = response.meta.get('search_term')
+            payload = json.dumps(self.get_product_payload({}, search_term))
+            meta = response.meta
+            meta['fire'] = True
+            product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, dont_filter=True,
+                                             headers={'Content-Type': 'application/json'},
+                                             meta=meta, callback=self.parse, )
+            yield product_request, ProductItem()
         else:
             try:
                 json_response = json.loads(response.body.decode("utf-8", "ignore"))
