@@ -32,7 +32,7 @@ class HpSpider(BaseProductsSpider):
     CATEGORY_URL = "http://store.hp.com/webapp/wcs/stores/servlet/HPBreadCrumbView?productId={product_id}" \
                    "&langId=-1&storeId=10151&catalogId=10051&urlLangId=-1&modelId={model_id}"
 
-    TOTAL_MATCHES = 0
+    TOTAL_MATCHES = None
 
     def __init__(self, *args, **kwargs):
         super(HpSpider, self).__init__(
