@@ -125,6 +125,8 @@ class EnUsInsightSpider(BaseProductsSpider):
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
+        except ValueError as e:
+            self.logger.debug(e.message)
         except Exception as e:
             self.logger.error(e.message)
         else:
@@ -143,6 +145,8 @@ class EnUsInsightSpider(BaseProductsSpider):
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
+        except ValueError as e:
+            self.logger.debug(e.message)
         except Exception as e:
             self.logger.error(e.message)
         else:
