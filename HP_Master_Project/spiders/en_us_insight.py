@@ -7,6 +7,7 @@ import re, requests
 
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
+import sys
 
 
 class EnUsInsightSpider(BaseProductsSpider):
@@ -105,7 +106,14 @@ class EnUsInsightSpider(BaseProductsSpider):
 
     def _scrape_total_matches(self, response):
         if self.retailer_id:
-            data = json.loads(response.body)
+            try:
+                data = json.loads(response.body)
+            except UnicodeDecodeError as ude:
+                jsonData = response.body.decode("utf-8", "replace")
+                reload(sys)
+                sys.setdefaultencoding('utf-8')
+                data = json.loads(jsonData)
+
             return len(data)
         total_matches = None
         try:
