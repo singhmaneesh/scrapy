@@ -97,7 +97,7 @@ class StaplesSpider(BaseProductsSpider):
         product = meta.get('product', ProductItem())
 
         if 'Good thing this is not permanent' in response.body_as_unicode():
-            product['not_found'] = True
+            # product['not_found'] = True
             return product
 
         maintenance_error = response.xpath('.//*[contains(text(), "The site is currently under maintenance.")]')
@@ -226,6 +226,9 @@ class StaplesSpider(BaseProductsSpider):
         try:
             js_data = self.parse_js_data(response)
             upc = js_data['metadata']['upc_code']
+            # if upc is of different item then return none in that case.
+            if not js_data['metadata']['productLink'] in response.url:
+                return None
             upc = upc[-12:]
             if len(upc) < 12:
                 count = 12-len(upc)
@@ -295,7 +298,7 @@ class StaplesSpider(BaseProductsSpider):
         try:
             feature_list = []
             js_data = self.parse_js_data(response)
-            features = js_data['description']['bullets']
+            features = js_data['description']['bullets'] if 'bullets'  in js_data['description'] else []
             for feat in features:
                 feature = feat['value']
                 if ':' in feature:
