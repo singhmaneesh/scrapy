@@ -98,7 +98,7 @@ class StaplesSpider(BaseProductsSpider):
 
         if 'Good thing this is not permanent' in response.body_as_unicode():
             # product['not_found'] = True
-            return product
+            return
 
         maintenance_error = response.xpath('.//*[contains(text(), "The site is currently under maintenance.")]')
         if maintenance_error:
