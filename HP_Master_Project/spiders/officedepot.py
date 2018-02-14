@@ -224,7 +224,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
             return float(price[0].replace(",", "").replace("$", ""))
 
     def _parse_retailer_key(self, response):
-        retailer_key = response.xpath('//td[contains(@id, "basicInfoManufacturerSku")]/text()').extract()
+        retailer_key = response.xpath('//td[contains(@id, "basicInfoCustomerSku")]/text()').extract()
         if retailer_key:
             return self.clear_text(retailer_key[0])
 
