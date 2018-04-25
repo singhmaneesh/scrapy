@@ -209,7 +209,10 @@ class ZonesSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_price(response):
-        price = response.xpath('//span[@class="prod-price"]/text()').extract()
+        price = response.xpath('//p[contains(@class, "prod-price") and contains(@class, "no_rebate--price")]/text()').extract()
+        if not price:
+            price = response.xpath('//span[contains(@class, "prod-price") and contains(@class, "after-rebate") and contains(@class, "yes_rebate--price")]/text()').extract()
+
         if price:
             return float(price[0].replace("$", "").replace(",", ""))
 

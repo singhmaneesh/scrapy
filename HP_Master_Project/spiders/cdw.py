@@ -200,13 +200,16 @@ class CdwSpider(BaseProductsSpider):
 
     def _parse_model(self, response):
         model = extract_first(response.xpath('//span[@itemprop="mpn"]/text()'))
-        return clean_text(self, model)
+        if (model):
+            return clean_text(self, model)
+        else :
+            return model
 
     @staticmethod
     def _parse_price(response):
         price = response.xpath('//span[@itemprop="price"]/text()').extract()
         if price:
-            return float(price[0].replace(",", ""))
+            return float((price[0].replace(",", "")).replace("$", ""))
 
     def _parse_instore(self, response):
         if self._parse_price(response):

@@ -116,7 +116,7 @@ class HpSpider(BaseProductsSpider):
         if not model_id:
             model_id = re.search('retrieveBreadCrumbDetails(.*?);', response.body)
             model_id = model_id.group(1).replace('(', '').replace(')', '') if model_id else None
-            model_id = model_id.split(',')[-1]
+            model_id.split(',')[-1] if model_id else None
 
         if product_id and model_id:
             return Request(
@@ -258,7 +258,12 @@ class HpSpider(BaseProductsSpider):
                 link = link['product_link']
                 link_list.append(link)
             for link in link_list:
-                yield link, ProductItem()
+                meta = response.meta
+                meta['fire'] = True
+                meta['dont_redirect'] = True
+                # stopping 301 redirects
+                product_request = Request(url=link, meta=meta, dont_filter=True)
+                yield product_request, ProductItem()
         else:
             links = response.xpath('//div[@class="productWrapper"]'
                                    '//div[@class="productInfo2"]//a[@class="productHdr"]/@href').extract()

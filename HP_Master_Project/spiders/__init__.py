@@ -339,8 +339,12 @@ class BaseProductsSpider(Spider):
             prods_count += 1  # Fix counter.
 
             request = self._get_next_products_page(response, prods_count)
-            if request is not None:
-                yield request
+            if prods_count == 0 and type(request) is dict and not request['next_page_found'] :
+                response = self._set_product_meta(response)
+                yield self.parse_product(response)
+            else:
+                if request is not None:
+                    yield request
 
     def _parse_single_product(self, response):
         """
@@ -438,7 +442,10 @@ class BaseProductsSpider(Spider):
             if remaining > 0:
                 next_page = self._scrape_next_results_page_link(response)
                 if next_page is None:
-                    pass
+                    if self.searchterms:
+                        result = {}
+                        result['next_page_found'] = 0
+                        return result
                 elif isinstance(next_page, Request):
                     next_page.meta['remaining'] = remaining
                     result = next_page
@@ -470,6 +477,17 @@ class BaseProductsSpider(Spider):
                 meta=new_meta, cookies={}, dont_filter=True)
 
         return result
+
+    def _set_product_meta(self, response):
+        prod = ProductItem()
+        prod['site'] = self.site_name
+        prod['search_term'] = response.meta['search_term']
+        prod['total_matches'] = 1
+        prod['results_per_page'] = 1
+        prod['scraped_results_per_page'] = 1
+        prod['ranking'] = 1
+        response.meta['product'] = prod
+        return response
 
     ## Abstract methods.
 
