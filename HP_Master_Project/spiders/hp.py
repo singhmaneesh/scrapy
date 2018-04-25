@@ -116,7 +116,7 @@ class HpSpider(BaseProductsSpider):
         if not model_id:
             model_id = re.search('retrieveBreadCrumbDetails(.*?);', response.body)
             model_id = model_id.group(1).replace('(', '').replace(')', '') if model_id else None
-            model_id = model_id.split(',')[-1]
+            model_id.split(',')[-1] if model_id else None
 
         if product_id and model_id:
             return Request(
