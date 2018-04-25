@@ -16,7 +16,7 @@ class ConnectionSpider(BaseProductsSpider):
     name = "connection_products"
     allowed_domains = ['connection.com', 'www.connection.com']
 
-    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821'
+    SEARCH_URL = 'https://www.connection.com/IPA/Shop/Product/Search?ManufId=4293851212+4293836821&term={search_term}'
 
     API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
               '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \

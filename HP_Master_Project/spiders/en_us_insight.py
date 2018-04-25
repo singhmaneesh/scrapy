@@ -31,6 +31,8 @@ class EnUsInsightSpider(BaseProductsSpider):
 
     def start_requests(self):
         for request in super(EnUsInsightSpider, self).start_requests():
+            if self.searchterms:
+                yield request
             if not self.product_url:
                 request = request.replace(callback=self.parse_search)
             yield request
@@ -49,6 +51,8 @@ class EnUsInsightSpider(BaseProductsSpider):
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
+        except ValueError as e:
+            self.logger.debug(e.message)
         else:
             try:
                 result_per_page = int(json_response["shown"])
@@ -71,6 +75,15 @@ class EnUsInsightSpider(BaseProductsSpider):
                                                  headers={'Content-Type': 'application/json'},
                                                  callback=self.parse, dont_filter=True)
                 yield product_request, ProductItem()
+        elif self.searchterms:
+            search_term = response.meta.get('search_term')
+            payload = json.dumps(self.get_product_payload({}, search_term))
+            meta = response.meta
+            meta['fire'] = True
+            product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, dont_filter=True,
+                                             headers={'Content-Type': 'application/json'},
+                                             meta=meta, callback=self.parse, )
+            yield product_request, ProductItem()
         else:
             try:
                 json_response = json.loads(response.body.decode("utf-8", "ignore"))
@@ -120,6 +133,8 @@ class EnUsInsightSpider(BaseProductsSpider):
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
+        except ValueError as e:
+            self.logger.debug(e.message)
         except Exception as e:
             self.logger.error(e.message)
         else:
@@ -138,6 +153,8 @@ class EnUsInsightSpider(BaseProductsSpider):
             json_response = json.loads(response.body.decode("utf-8", "ignore"))
         except TypeError as e:
             self.logger.error(e.message + "Json respone cannot be parsed")
+        except ValueError as e:
+            self.logger.debug(e.message)
         except Exception as e:
             self.logger.error(e.message)
         else:
