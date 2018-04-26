@@ -34,14 +34,14 @@ class CurrysSpider(BaseProductsSpider):
         self.url_formatter = FormatterWithDefaults(page_num=1)
 
     def start_requests(self):
-        print "Start Requests Called"
+        #print "Start Requests Called"
         for request in super(CurrysSpider, self).start_requests():
-            if not self.retailer_url:
+            if not self.product_url:
                 request = request.replace(callback=self.parse_search, dont_filter=True)
             yield request
 
     def parse_search(self, response):
-        print "Parse Search Called"
+        #print "Parse Search Called"
         page_title = response.xpath('//div[@class="col12 resultList"]').extract()
         if page_title or self.retailer_id:
             return self.parse(response)
@@ -49,7 +49,7 @@ class CurrysSpider(BaseProductsSpider):
             return self._parse_single_product(response)
 
     def _parse_single_product(self, response):
-        print "Parse Single Product Called"
+        #print "Parse Single Product Called"
         return self.parse_product(response)
 
     def parse_product(self, response):
@@ -195,7 +195,7 @@ class CurrysSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
-        print "Scrape Total Matches Called"
+        #print "Scrape Total Matches Called"
         if self.retailer_id:
             data = json.loads(response.body)
             return len(data)
@@ -212,7 +212,7 @@ class CurrysSpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        print "Scrape Product Links Called"
+        #print "Scrape Product Links Called"
         link_list = []
         if self.retailer_id:
             data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
@@ -228,7 +228,7 @@ class CurrysSpider(BaseProductsSpider):
                 yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        print "Scrape Next Results Page Called"
+        #print "Scrape Next Results Page Called"
         if self.retailer_id:
             return None
         search_term = response.meta['search_term']
