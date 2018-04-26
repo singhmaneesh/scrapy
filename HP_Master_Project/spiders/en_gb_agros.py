@@ -102,6 +102,9 @@ class AgrosSpider(BaseProductsSpider):
         # Parse categories
         categories = self._parse_categories(response)
         product['categories'] = categories
+        
+        sku = self._parse_sku(response)
+        product['sku'] = sku
 
         # Parse unspec
         # unspec = self._parse_unspec(response)
@@ -154,7 +157,7 @@ class AgrosSpider(BaseProductsSpider):
     def _parse_ean(response):
         ean = re.search('EAN: ([^<]+)</li>', response.text)
         if ean:
-            ean = ean.group(1).strip()
+            ean = ean.group(1).strip().strip('.')
             return ean
 
     @staticmethod
@@ -181,6 +184,11 @@ class AgrosSpider(BaseProductsSpider):
     def _parse_categories(response):
         categories = response.css('li.breadcrumb__item span[itemprop="name"]::text').extract()
         return categories
+    
+    @staticmethod
+    def _parse_sku(response):
+        sku = response.url.rsplit('/', 1)[1]
+        return sku
 
     # @staticmethod
     # def _parse_unspec(response):
@@ -287,6 +295,11 @@ class AgrosSpider(BaseProductsSpider):
                 link_list.append(link)
             for link in link_list:
                 url = urlparse.urljoin(response.url, link)
+                meta = response.meta
+                meta['fire'] = True
+                meta['dont_redirect'] = True
+                # stopping 301 redirects
+                product_request = Request(url=link, meta=meta, dont_filter=True)
                 yield url, ProductItem()
         else:
             links = response.css('div.product-list a.ac-product-link::attr(href)').extract()
