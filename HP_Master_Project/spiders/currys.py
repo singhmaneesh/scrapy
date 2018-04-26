@@ -15,7 +15,7 @@ from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class CurrysSpider(BaseProductsSpider):
-    name = "currys_products"
+    name = "en-GB_Currys"
     allowed_domains = ['currys.co.uk', 'www.currys.co.uk']
 
     SEARCH_URL = "https://www.currys.co.uk/gbuk/search-keywords/xx_xx_xx_xx_xx/{search_term}/{page_num}_50/" \
