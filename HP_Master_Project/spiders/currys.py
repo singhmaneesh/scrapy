@@ -120,6 +120,7 @@ class CurrysSpider(BaseProductsSpider):
         if name:
             name = ''.join(name)
             name = ' '.join(name.split())
+            return name
 
     def _parse_brand(self, response):
         brand = response.xpath("//script[@type='application/ld+json'][2]") \
@@ -164,16 +165,18 @@ class CurrysSpider(BaseProductsSpider):
             return model[0]
 
     def _parse_categories(self, response):
-        model = response.xpath("//div[@class='breadcrumb']/a/span/text()").extract()
-        if model:
-            model.remove(u'Home')
+        categories = response.xpath("//div[@class='breadcrumb']/a/span/text()").extract()
+        if categories:
+            categories.remove(u'Home')
             #model = '|'.join(model)
-            return model
+            return categories
 
     def _parse_price(self, response):
         price = response.xpath("//strong[@data-key='current-price']/text()").extract()
         if price:
-            return price[0]
+            x = price[0].encode('utf8')
+            x = x[2:]
+            return x
 
     def _parse_gallery(self, response):
         gallery = response.xpath("//div[@id='carousel']//li/a/@href").extract()
@@ -188,7 +191,7 @@ class CurrysSpider(BaseProductsSpider):
             index = features_name.index(f_name)
             features_value_content = features_value[index].xpath('text()').extract()[0]
             if features_value_content:
-                features_value_content = features_value_content[0]
+                features_value_content = features_value_content
             feature = {f_name: features_value_content} if features_value_content else {f_name: ""}
             features.append(feature)
 
