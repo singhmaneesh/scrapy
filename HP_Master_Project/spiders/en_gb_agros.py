@@ -48,30 +48,6 @@ class AgrosSpider(BaseProductsSpider):
         if page_title or self.retailer_id:
             return self.parse(response)
 
-        else:
-            pass
-            # category_url = response.xpath('//div[@class="button-lockup -center"]/a/@href').extract()
-            # for c_url in category_url:
-            #     link = urlparse.urljoin(response.url, c_url)
-            #     return Request(url=link, meta=response.meta, callback=self.parse_category_link, dont_filter=True)
-
-    # def parse_category_link(self, response):
-    #     links = response.xpath('//div[contains(@class, "button-lockup")]'
-    #                            '/a/@href').extract()
-    #     if links:
-    #         for link in links:
-    #             href = urlparse.urljoin(response.url, link)
-    #             yield Request(url=href, meta=response.meta, dont_filter=True, callback=self.parse_category_links)
-
-    # @staticmethod
-    # def parse_category_links(response):
-    #     link = response.xpath('//div[contains(@class, "multi-button")]/div[@class="dropdown"]'
-    #                           '/a/@href').extract()
-    #     for l in link:
-    #         if 'shop' in l:
-    #             l = urlparse.urljoin(response.url, l)
-    #             yield Request(url=l, meta=response.meta, dont_filter=True)
-
     def _parse_single_product(self, response):
         return self.parse_product(response)
 
@@ -102,10 +78,9 @@ class AgrosSpider(BaseProductsSpider):
         # Parse categories
         categories = self._parse_categories(response)
         product['categories'] = categories
-
-        # Parse unspec
-        # unspec = self._parse_unspec(response)
-        # product['unspec'] = unspec
+        
+        sku = self._parse_sku(response)
+        product['sku'] = sku
 
         # Parse currencycode
         product['currencycode'] = self._parse_currency_code(response)
@@ -117,31 +92,11 @@ class AgrosSpider(BaseProductsSpider):
         price = self._parse_price(response)
         product['price'] = price
 
-        # Parse sale price
-        product['saleprice'] = price
-
-        # Parse in_store
-        in_store = self._parse_instore(response)
-        product['instore'] = in_store
-
-        # Parse ship to store
-        ship_to_store = self._parse_shiptostore(response)
-        product['shiptostore'] = ship_to_store
-
-        # Parse shipping phrase
-        # shipping_phrase = self._parse_shippingphrase(response)
-        # product['shippingphrase'] = shipping_phrase
-
-        # Parse stock status
-        stock_status = self._parse_stock_status(response)
-        product['productstockstatus'] = stock_status
-
         # Parse gallery
         gallery = self._parse_gallery(response)
         product['gallery'] = gallery
 
         # Parse features
-
         features = self._parse_features(response)
         product['features'] = features
 
@@ -154,7 +109,7 @@ class AgrosSpider(BaseProductsSpider):
     def _parse_ean(response):
         ean = re.search('EAN: ([^<]+)</li>', response.text)
         if ean:
-            ean = ean.group(1).strip()
+            ean = ean.group(1).strip().strip('.')
             return ean
 
     @staticmethod
@@ -166,8 +121,6 @@ class AgrosSpider(BaseProductsSpider):
     @staticmethod
     def _parse_brand(response):
         brand = response.css('a[itemprop="brand"]::text').extract()
-        # if not brand:
-        #     brand = response.xpath('//span[@class="brand"]/text()').extract()
         return brand[0].strip() if brand else None
 
     @staticmethod
@@ -181,12 +134,11 @@ class AgrosSpider(BaseProductsSpider):
     def _parse_categories(response):
         categories = response.css('li.breadcrumb__item span[itemprop="name"]::text').extract()
         return categories
-
-    # @staticmethod
-    # def _parse_unspec(response):
-    #     unspec = response.xpath('//span[@itemprop="gtin8"]/text()').extract()
-    #     if unspec:
-    #         return unspec[0]
+    
+    @staticmethod
+    def _parse_sku(response):
+        sku = response.url.rsplit('/', 1)[1]
+        return sku
 
     def _parse_gallery(self, response):
         if not self._parse_image(response):
@@ -198,11 +150,16 @@ class AgrosSpider(BaseProductsSpider):
         return image_list
 
     def _parse_model(self, response):
-        # TODO
         model = re.search('Model number:([^<]+)</p>', response.text)
         if model:
             model = model.group(1).strip()
             return clean_text(self, model)
+    
+    @staticmethod
+    def _parse_currency_code(response):
+        currency_code = response.css('span[itemprop="priceCurrency"]::attr(content)').extract()
+        if currency_code:
+            return currency_code[0]
 
     @staticmethod
     def _parse_price(response):
@@ -210,47 +167,8 @@ class AgrosSpider(BaseProductsSpider):
         if price:
             return float((price[0].replace(",", "")))
 
-    def _parse_instore(self, response):
-        # TODO
-        # if self._parse_price(response):
-        #     return 1
-
-        return 0
-
-    def _parse_shiptostore(self, response):
-        # TODO
-        # if self._parse_shippingphrase(response):
-        #     return 1
-
-        return 0
-
     @staticmethod
-    def _parse_shippingphrase(response):
-        # shipping_phrase = response.xpath('//div[@class="long-message-block"]//text()').extract()
-        # return "".join(shipping_phrase).strip()
-        pass
-
-    def _parse_stock_status(self, response):
-        stock_value = 4
-        # stock_status = response.xpath('//link[@itemprop="availability"]/@href').extract()
-        # if stock_status:
-        #     stock_status = stock_status[0].lower()
-        #
-        # if 'outofstock' in stock_status:
-        #     stock_value = 0
-        #
-        # if 'instock' in stock_status:
-        #     stock_value = 1
-        #
-        # if self._parse_shippingphrase(response) == 'Call for availability':
-        #     stock_value = 2
-        #
-        # if 'discontinued' in stock_status:
-        #     stock_value = 3
-
-        return stock_value
-
-    def _parse_features(self, response):
+    def _parse_features(response):
         features = response.css('div.product-description-content-text li::text').extract()
         return features
 
@@ -287,7 +205,12 @@ class AgrosSpider(BaseProductsSpider):
                 link_list.append(link)
             for link in link_list:
                 url = urlparse.urljoin(response.url, link)
-                yield url, ProductItem()
+                meta = response.meta
+                meta['fire'] = True
+                meta['dont_redirect'] = True
+                # stopping 301 redirects
+                product_request = Request(url=url, meta=meta, dont_filter=True)
+                yield product_request, ProductItem()
         else:
             links = response.css('div.product-list a.ac-product-link::attr(href)').extract()
             for link in links:
@@ -305,9 +228,3 @@ class AgrosSpider(BaseProductsSpider):
             next_page = self.SEARCH_URL.format(page_num=self.current_page,
                                                search_term=response.meta['search_term'])
             return next_page
-
-    @staticmethod
-    def _parse_currency_code(response):
-        currency_code = response.css('span[itemprop="priceCurrency"]::attr(content)').extract()
-        if currency_code:
-            return currency_code[0]
