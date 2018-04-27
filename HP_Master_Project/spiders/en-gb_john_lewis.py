@@ -160,10 +160,10 @@ class AgrosSpider(BaseProductsSpider):
         if retailer_key:
             return retailer_key
     
-    # def _parse_retailer_key2(self, response):
-    #    retailer_key2 = response.url.rsplit('/', 1)[1].strip('p')
-    #    if retailer_key2:
-    #        return retailer_key2
+    def _parse_retailer_key2(self, response):
+       retailer_key2 = response.url.rsplit('/', 1)[1].strip('p')
+       if retailer_key2:
+           return retailer_key2
     
     def _parse_mpn(self, response):
         mpn = response.xpath(
@@ -229,12 +229,6 @@ class AgrosSpider(BaseProductsSpider):
         if self.retailer_id:
             data = json.loads(response.body)
             return len(data)
-
-        # total = len(response.css('section.product-list-item').extract())
-        # if total and total.isdigit():
-        #         if not self.TOTAL_MATCHES:
-        #             self.TOTAL_MATCHES = int(total)
-        #         return int(total)
 
     def _scrape_results_per_page(self, response):
         if self.retailer_id:
