@@ -84,8 +84,8 @@ class AgrosSpider(BaseProductsSpider):
         product['retailer_key'] = retailer_key
         
         # Parse retailer key 2
-        # retailer_key2 = self._parse_retailer_key2(response)
-        # product['retailer_key2'] = retailer_key2
+        retailer_key2 = self._parse_retailer_key2(response)
+        product['ean'] = retailer_key2
         
         # Parse mpn
         mpn = self._parse_mpn(response)
