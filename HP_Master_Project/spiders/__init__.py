@@ -184,6 +184,7 @@ class BaseProductsSpider(Spider):
         'ipad4': 'Mozilla/5.0 (iPad; U; CPU iPhone OS 4_0 like Mac OS X; en-us)'\
             ' AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
     }
+    headers = {}
 
     def __init__(self,
                  url_formatter=None,
@@ -282,6 +283,7 @@ class BaseProductsSpider(Spider):
                         retailer_id=self.retailer_id,
                     ),
                     meta={'search_term': '', 'remaining': self.quantity}
+
                 )
             else:
                 for st in self.searchterms:
@@ -291,6 +293,7 @@ class BaseProductsSpider(Spider):
                             search_term=urllib.quote_plus(st.encode('utf-8')),
                         ),
                         meta={'search_term': st, 'remaining': self.quantity},
+                        headers=self.headers
                     )
 
         if self.product_url:
