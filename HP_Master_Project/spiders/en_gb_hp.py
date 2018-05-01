@@ -6,6 +6,7 @@ from scrapy import Request
 import re
 import json
 import math
+import urlparse
 
 from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
@@ -15,7 +16,7 @@ from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 class EnGbHpSpider(BaseProductsSpider):
     name = 'en_gb_hp'
-    allowed_domains = ['store.hp.com', 'www.hp.com']
+    allowed_domains = ['store.hp.com', 'www.hp.com','eu1-search.doofinder.com']
 
     SEARCH_URL = "http://eu1-search.doofinder.com/5/search?hashid=68255af0073c20fc7a549d26435bccd8&page=1&query={search_term}&rpp=5&type=CG953"
     PAGINATE_URL = "http://eu1-search.doofinder.com/5/search?hashid=68255af0073c20fc7a549d26435bccd8&page={page_no}&query={search_term}&rpp=5&type=CG953"
@@ -30,7 +31,7 @@ class EnGbHpSpider(BaseProductsSpider):
     def __init__(self, *args, **kwargs):
         super(EnGbHpSpider, self).__init__(
             site_name=self.allowed_domains[0], *args, **kwargs)
-        self.current_page = 0
+        self.current_page = 1
         self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
                           "Chrome/60.0.3112.90 Safari/537.36"
 
@@ -116,9 +117,9 @@ class EnGbHpSpider(BaseProductsSpider):
         return product
 
     def _parse_model(self, response):
-        model = response.xpath('//p[contains(@class, "prod-nr")]/text()').extract()
+        model = response.xpath('//*[@itemprop="sku"]/@content')[0].extract()
         if model:
-            return self.clear_text(model[0])
+            return self.clear_text(model)
 
     @staticmethod
     def _parse_gallery(response):
@@ -132,9 +133,15 @@ class EnGbHpSpider(BaseProductsSpider):
             return price
 
     def _parse_retailer_key(self, response):
-        retailer_key = response.xpath('//div[@class="prodSku"]/span[@class="prodNum"]/text()').extract()
+        retailer_key = response.xpath('//*[@itemprop="sku"]/@content')[0].extract()
+
         if retailer_key:
-            return self.clear_text(retailer_key[0])
+            key = retailer_key.split("_")
+            if (len(key)) >=5:
+                key = key[3] + "#" + key[4]
+            else:
+                key = key[0]
+            return key
 
     def _parse_instore(self, response):
         if self._parse_price(response):
@@ -197,6 +204,12 @@ class EnGbHpSpider(BaseProductsSpider):
             return None
         search_term = response.meta['search_term']
         self.current_page += 1
-        if self.current_page < math.ceil(self.total_matches / 5.0):
+        if self.current_page <= math.ceil(self.total_matches / 5.0):
             next_page = self.PAGINATE_URL.format(search_term=search_term, page_no=self.current_page)
-            return next_page
+            url = urlparse.urljoin(response.url, next_page)
+            new_meta = dict((k, v) for k, v in response.meta.iteritems()
+                            if k in ['remaining', 'total_matches', 'search_term',
+                                     'products_per_page', 'scraped_results_per_page']
+                            )
+            result = Request(url, self.parse, meta=new_meta, priority=1, headers=self.headers)
+            return result
