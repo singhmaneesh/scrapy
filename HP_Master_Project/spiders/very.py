@@ -151,14 +151,14 @@ class VerySpider(BaseProductsSpider):
             return image[0]
 
     def _parse_model(self, response):
-        model = response.xpath("//span[@id='productMPN']/text()").extract()[-1].strip()
+        model = response.xpath("//span[@id='productMPN']/text()").extract()
         if model:
-            return model
+            return model[-1].strip()
 
     def _parse_ean(self, response):
-        ean = response.xpath("//span[@id='productEAN']/text()").extract()[-1].strip()
+        ean = response.xpath("//span[@id='productEAN']/text()").extract()
         if ean:
-            return ean
+            return ean[-1].strip()
 
     def _parse_categories(self, response):
         categories = response.xpath("//li[@itemprop='itemListElement']//text()").extract()
@@ -202,9 +202,9 @@ class VerySpider(BaseProductsSpider):
             data = json.loads(response.body)
             return len(data)
 
-        totals = response.xpath("//div[@class='productsPerPage']/span/text()").extract()[0].encode('utf8')
-        totals = totals.strip()
+        totals = response.xpath("//div[@class='productsPerPage']/span/text()").extract()
         if totals:
+            totals = totals[0].encode('utf8').strip()
             totals = re.search("[0-9]+[)]", str(totals))
             if totals:
                 totals = totals.group(0).replace(')','').replace(',', '').replace('.', '').strip()
