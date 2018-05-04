@@ -34,14 +34,12 @@ class VerySpider(BaseProductsSpider):
         #self.url_formatter = FormatterWithDefaults(page_num=1)
 
     def start_requests(self):
-        print "Start Requests Called"
         for request in super(VerySpider, self).start_requests():
             if not self.product_url:
                 request = request.replace(callback=self.parse_search, dont_filter=True)
             yield request
 
     def parse_search(self, response):
-        print "Parse Search Called"
         page_title = response.xpath('//ul[@class="productList"]').extract()
         if page_title or self.retailer_id:
             return self.parse(response)
@@ -49,11 +47,9 @@ class VerySpider(BaseProductsSpider):
             return self._parse_single_product(response)
 
     def _parse_single_product(self, response):
-        print "Parse Single Product Called"
         return self.parse_product(response)
 
     def parse_product(self, response):
-        print "Parse Product Called"
         product = ProductItem()
         # Parse name
         name = self._parse_name(response)
@@ -202,7 +198,6 @@ class VerySpider(BaseProductsSpider):
         
 
     def _scrape_total_matches(self, response):
-        print "Scrape Total Matches Called"
         if self.retailer_id:
             data = json.loads(response.body)
             return len(data)
@@ -220,7 +215,6 @@ class VerySpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        print "Scrape Product Links Called"
         link_list = []
         if self.retailer_id:
             data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
@@ -236,14 +230,12 @@ class VerySpider(BaseProductsSpider):
                 yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        print "Scrape Next Results Page Called"
         if self.retailer_id:
             return None
         #search_term = response.meta['search_term']
         self.current_page += 1
         if self.current_page==2:
             self.SEARCH_URL = response.url
-            print "FIRST PAGE: ---------- ", self.SEARCH_URL
         #else:
         #    self.SEARCH_URL = self.SEARCH_URL.split('?pageNumber=')[0]
         if self.current_page < math.ceil(self.TOTAL_MATCHES / 12.0):
