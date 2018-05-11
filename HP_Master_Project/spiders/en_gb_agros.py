@@ -19,7 +19,7 @@ class AgrosSpider(BaseProductsSpider):
     name = "en_gb_agros"
     allowed_domains = ['www.argos.co.uk', 'agros.co.uk']
 
-    SEARCH_URL = 'http://www.argos.co.uk/search/hp/{search_term}/opt/page:{page_num}/'
+    SEARCH_URL = 'http://www.argos.co.uk/search/{search_term}/opt/page:{page_num}/'
 
     API_URL = 'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
               '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
