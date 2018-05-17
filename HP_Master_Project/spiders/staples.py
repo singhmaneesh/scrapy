@@ -146,12 +146,8 @@ class StaplesSpider(BaseProductsSpider):
         retailer_key = self._parse_retailer_key(response)
         product['retailer_key'] = retailer_key
 
-        # Parse product stock status
-        product_stock_status = self._parse_product_stock_status(response)
-        product['productstockstatus'] = product_stock_status
-
         # Parse in_store
-        in_store = self._parse_in_store(response)
+        in_store = self._parse_instore(response)
         product['instore'] = in_store
 
         # Parse ship to store
@@ -169,9 +165,6 @@ class StaplesSpider(BaseProductsSpider):
         product['condition'] = 1
 
         # Parse price
-        price = self._parse_price(response)
-        product['price'] = price
-
         js_data = self.parse_js_data(response)
         try:
             if product.get("sku", ""):
@@ -210,10 +203,9 @@ class StaplesSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_image(response):
-        img = response.css('div.hero-image-container img::attr(src)').extract_first()
+        img = response.xpath('//img[contains(@class, "stp--sku-image")]/@src').extract()
         if img:
-            img = img.rsplit('?', 1)[0] + '?wid=1536&hei=1536'
-            return img
+            return img[0]
 
     def _parse_sku(self, response):
         sku = response.xpath('//span[contains(@itemprop, "sku")]/text()').extract()
@@ -226,43 +218,72 @@ class StaplesSpider(BaseProductsSpider):
         return categories
 
     def _parse_model(self, response):
-        model = response.css('span#mmx-sku-manufacturerPartNumber::text').extract_first()
+        model = response.xpath('//span[contains(@ng-bind, "product.metadata.mfpartnumber")]/text()').extract()
         if model:
-            return self.clear_text(model)
+            return self.clear_text(model[0])
 
-    @staticmethod
-    def _parse_upc(response):
-        upc = response.css('div#mmx-upc-code::text').extract_first()
-        if upc:
+    def _parse_upc(self, response):
+        try:
+            js_data = self.parse_js_data(response)
+            upc = js_data['metadata']['upc_code']
+            # if upc is of different item then return none in that case.
+            if not js_data['metadata']['productLink'] in response.url:
+                return None
+            upc = upc[-12:]
+            if len(upc) < 12:
+                count = 12-len(upc)
+                upc = '0'*count + upc
             return upc
+        except Exception as e:
+            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
+            return None
 
     @staticmethod
     def _parse_gallery(response):
-        gallery = response.css('div.mmxthumbnails img::attr(src)').extract()
-        if gallery:
-            gallery = [image.rsplit('?', 1)[0] + '?wid=1536&hei=1536' for image in gallery]
-            return gallery
+        gallery = response.xpath('//div[@class="thumbs-wrapper"]/ul[@ng-hide="showThumbnails"]/li/img/@src').extract()
+        return gallery
 
     def _parse_price(self, response):
-        price = response.css('span[itemprop="price"]::text').extract_first()
-        if price:
-            return price
+        meta = response.meta.copy()
+        product = response.meta['product']
+        try:
+            jsonresponse = json.loads(response.body_as_unicode())
+            if u'currentlyOutOfStock' in jsonresponse['cartAction']:
+                product['productstockstatus'] = 0
+            else:
+                product['productstockstatus'] = 1
+
+            product['price'] = jsonresponse['pricing']['nowPrice']
+            if not product['price']:
+                product['price'] = jsonresponse['pricing']['finalPrice']
+            product['saleprice'] = jsonresponse['pricing']['finalPrice']
+            return product
+
+        except BaseException as e:
+            self.log("Error parsing base product data: {}".format(e), WARNING)
+            if 'No JSON object could be decoded' in e:
+                self.log("Repeating base product data request: {}".format(e), WARNING)
+                return Request(response.url, callback=self._parse_price, meta=meta, dont_filter=True)
 
     def _parse_retailer_key(self, response):
         retailer_key = response.xpath('//span[contains(@itemprop, "sku")]/text()').extract()
         if retailer_key:
             return self.clear_text(retailer_key[0])
 
-    def _parse_in_store(self, response):
+    def _parse_instore(self, response):
         if self._parse_price(response):
             return 1
+
         return 0
 
-    @staticmethod
-    def _parse_manufacturer(response):
-        manufacturer = response.css('div#mmx-upc-code::text').extract_first()
-        if manufacturer:
+    def _parse_manufacturer(self, response):
+        try:
+            js_data = self.parse_js_data(response)
+            manufacturer = js_data['metadata']['mfname']
             return manufacturer
+        except Exception as e:
+            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
+            return None
 
     def _parse_shiptostore(self, response):
         try:
@@ -277,7 +298,7 @@ class StaplesSpider(BaseProductsSpider):
         try:
             feature_list = []
             js_data = self.parse_js_data(response)
-            features = js_data['description']['bullets'] if 'bullets' in js_data['description'] else []
+            features = js_data['description']['bullets'] if 'bullets'  in js_data['description'] else []
             for feat in features:
                 feature = feat['value']
                 if ':' in feature:
@@ -387,11 +408,3 @@ class StaplesSpider(BaseProductsSpider):
 
         if url:
             return Request(url=url, meta=meta, dont_filter=True)
-
-    def _parse_product_stock_status(self, response):
-        product_stock_status = response.css('button.mmx-add-to-cart::text').extract_first()
-        if product_stock_status:
-            if product_stock_status.strip() == 'Add To Cart':
-                return 1
-            else:
-                return 0
