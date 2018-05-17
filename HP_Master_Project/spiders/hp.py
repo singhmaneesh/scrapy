@@ -51,6 +51,10 @@ class HpSpider(BaseProductsSpider):
         name = self._parse_name(response)
         product['name'] = name
 
+        # Parse link
+        link = response.url
+        product['link'] = link
+
         # Parse image
         image = self._parse_image(response)
         product['image'] = image
