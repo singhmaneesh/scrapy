@@ -45,6 +45,18 @@ class HpSpider(BaseProductsSpider):
         return self.parse_product(response)
 
     def parse_product(self, response):
+        # stop redirects other than that from http to https
+        if self.retailer_id and 'redirect_urls' in response.meta:
+            https_redirect = False
+            redirect_urls = response.meta['redirect_urls']
+            if response.url.startswith('https:'):
+                for redirect_url in redirect_urls:
+                    if redirect_url == response.url.replace('https:', 'http:', 1):
+                        https_redirect = True
+                        break
+                if not https_redirect:
+                    return
+
         product = response.meta['product']
 
         # Parse name
@@ -120,7 +132,7 @@ class HpSpider(BaseProductsSpider):
         if not model_id:
             model_id = re.search('retrieveBreadCrumbDetails(.*?);', response.body)
             model_id = model_id.group(1).replace('(', '').replace(')', '') if model_id else None
-            model_id.split(',')[-1] if model_id else None
+            # model_id.split(',')[-1] if model_id else None
 
         if product_id and model_id:
             return Request(
@@ -264,8 +276,8 @@ class HpSpider(BaseProductsSpider):
             for link in link_list:
                 meta = response.meta
                 meta['fire'] = True
-                meta['dont_redirect'] = True
-                meta['handle_httpstatus_list'] = ['301']
+                # meta['dont_redirect'] = True
+                # meta['handle_httpstatus_list'] = ['301']
                 # stopping 301 redirects
                 product_request = Request(url=link, meta=meta, dont_filter=True)
                 yield product_request, ProductItem()
