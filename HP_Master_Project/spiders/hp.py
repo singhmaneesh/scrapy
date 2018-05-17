@@ -261,6 +261,7 @@ class HpSpider(BaseProductsSpider):
                 meta = response.meta
                 meta['fire'] = True
                 meta['dont_redirect'] = True
+                meta['handle_httpstatus_list'] = ['301']
                 # stopping 301 redirects
                 product_request = Request(url=link, meta=meta, dont_filter=True)
                 yield product_request, ProductItem()
