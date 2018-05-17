@@ -54,8 +54,13 @@ class HpSpider(BaseProductsSpider):
                     if redirect_url == response.url.replace('https:', 'http:', 1):
                         https_redirect = True
                         break
+<<<<<<< HEAD
             if not https_redirect:
                 return
+=======
+                if not https_redirect:
+                    return
+>>>>>>> 41ec1d4ede812ee1f0df61fdd26308627ca528b1
 
         product = response.meta['product']
 
