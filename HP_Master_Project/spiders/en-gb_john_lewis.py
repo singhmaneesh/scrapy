@@ -124,7 +124,7 @@ class AgrosSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_name(response):
-        name = response.css('header.product-header h1::text').extract()
+        name = response.css('header[itemprop="productId"] h1::text').extract()
         if name:
             return name[0]
 
