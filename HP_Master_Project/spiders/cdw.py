@@ -202,7 +202,7 @@ class CdwSpider(BaseProductsSpider):
         model = extract_first(response.xpath('//span[@itemprop="mpn"]/text()'))
         if (model):
             return clean_text(self, model)
-        else :
+        else:
             return model
 
     @staticmethod
@@ -229,22 +229,17 @@ class CdwSpider(BaseProductsSpider):
         return "".join(shipping_phrase).strip()
 
     def _parse_stock_status(self, response):
-        stock_value = 4
+        stock_value = self.STOCK_STATUS['OTHER']
+
         stock_status = response.xpath('//link[@itemprop="availability"]/@href').extract()
         if stock_status:
             stock_status = stock_status[0].lower()
-
-        if 'outofstock' in stock_status:
-            stock_value = 0
-
-        if 'instock' in stock_status:
-            stock_value = 1
-
-        if self._parse_shippingphrase(response) == 'Call for availability':
-            stock_value = 2
-
-        if 'discontinued' in stock_status:
-            stock_value = 3
+            if 'outofstock' in stock_status:
+                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+            elif 'instock' in stock_status:
+                stock_value = self.STOCK_STATUS['IN_STOCK']
+            elif self._parse_shippingphrase(response) == 'Call for availability':
+                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
         return stock_value
 
@@ -333,7 +328,7 @@ class CdwSpider(BaseProductsSpider):
         self.current_page += 1
 
         if (self.TOTAL_MATCHES and self.RESULT_PER_PAGE and
-                    self.current_page < math.ceil(self.TOTAL_MATCHES / float(self.RESULT_PER_PAGE))):
+                self.current_page < math.ceil(self.TOTAL_MATCHES / float(self.RESULT_PER_PAGE))):
             next_page = self.SEARCH_URL.format(page_num=self.current_page,
                                                search_term=response.meta['search_term'])
             return next_page
