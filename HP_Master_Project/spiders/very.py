@@ -31,7 +31,7 @@ class VerySpider(BaseProductsSpider):
         self.current_page = 1
         self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
                           "Chrome/60.0.3112.90 Safari/537.36"
-        #self.url_formatter = FormatterWithDefaults(page_num=1)
+        # self.url_formatter = FormatterWithDefaults(page_num=1)
 
     def start_requests(self):
         for request in super(VerySpider, self).start_requests():
@@ -77,8 +77,8 @@ class VerySpider(BaseProductsSpider):
         product['categories'] = categories
 
         # Parse unspec DOUBT DOUBT
-        #unspec = self._parse_unspec(response)
-        #product['unspec'] = unspec
+        # unspec = self._parse_unspec(response)
+        # product['unspec'] = unspec
 
         # Parse currencycode
         product['currencycode'] = 'GBP'
@@ -109,80 +109,97 @@ class VerySpider(BaseProductsSpider):
         # Parse features
         features = self._parse_features(response)
         product['features'] = features
-        
+
         # Parse condition
         product['condition'] = 1
 
         return product
 
-    def _parse_name(self, response):
+    @staticmethod
+    def _parse_name(response):
         name = response.xpath("//h1[@class='productHeading']//text()").extract()
         if name:
             name = ''.join(name)
             name = ' '.join(name.split())
             return name
 
-    def _parse_brand(self, response):
+    @staticmethod
+    def _parse_brand(response):
         brand = response.xpath("//h1[@class='productHeading']//text()").extract()
         return brand[0].encode('utf-8').strip()
 
-        if brand:
-            return brand
-
-    def _parse_sku(self, response):
-        sku = response.xpath("/html/head/script[3]/text()").extract()[0].encode('utf8').replace('\n','').strip()
-        skuData = re.search("(?<=sku: \")(.*)(?=\",url)",sku)
+    @staticmethod
+    def _parse_sku(response):
+        sku = response.xpath("/html/head/script[3]/text()").extract()[0].encode('utf8').replace('\n', '').strip()
+        skuData = re.search("(?<=sku: \")(.*)(?=\",url)", sku)
         if skuData:
             return skuData.group(0)
 
     def _parse_stock_status(self, response):
         stock_status = response.xpath("//meta[@property='product:availability']/@content").extract()
+        stock_value = self.STOCK_STATUS['OTHER']
         if stock_status:
-            return stock_status[0]
+            stock_status = stock_status[0]
+            if stock_status == 'In Stock':
+                stock_value = self.STOCK_STATUS['IN_STOCK']
+            elif stock_status == 'Out Of Stock':
+                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+            elif stock_status == 'Call For Availability':
+                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
-    def _parse_retailer_key(self, response):
+        return stock_value
+
+    @staticmethod
+    def _parse_retailer_key(response):
         retailer_key = response.xpath("//span[@id='catalogueNumber']/text()").extract()
         if retailer_key:
             return retailer_key[0]
 
-    def _parse_image(self, response):
+    @staticmethod
+    def _parse_image(response):
         image = response.xpath("//li[@class='productImageItem']/a/@href").extract()
         if image:
             return image[0]
 
-    def _parse_model(self, response):
+    @staticmethod
+    def _parse_model(response):
         model = response.xpath("//span[@id='productMPN']/text()").extract()
         if model:
             return model[-1].strip()
 
-    def _parse_ean(self, response):
+    @staticmethod
+    def _parse_ean(response):
         ean = response.xpath("//span[@id='productEAN']/text()").extract()
         if ean:
             return ean[-1].strip()
 
-    def _parse_categories(self, response):
+    @staticmethod
+    def _parse_categories(response):
         categories = response.xpath("//li[@itemprop='itemListElement']//text()").extract()
         if categories:
             categories = filter(lambda a: a != '\n', categories)
             categories = filter(lambda a: a != '/', categories)
             categories.remove(u'Home')
-            #model = '|'.join(model)
+            # model = '|'.join(model)
             return categories
 
-    def _parse_price(self, response):
+    @staticmethod
+    def _parse_price(response):
         price = response.xpath("//div[@class='priceNow']//text()").extract()
         price = ''.join(price)
-        price = price.replace('Now','').strip()
+        price = price.replace('Now', '').strip()
         if price:
             x = price.encode('utf8')
             x = x[2:]
             return x
 
-    def _parse_gallery(self, response):
+    @staticmethod
+    def _parse_gallery(response):
         gallery = response.xpath("//li[@class='productImageItem']/a/@href").extract()
         return gallery
 
-    def _parse_features(self, response):
+    @staticmethod
+    def _parse_features(response):
         features = []
         features_name = response.xpath("//div[@id='productSpecification']/table//tr/td[1]/text()").extract()
         features_value = response.xpath("//div[@id='productSpecification']/table//tr/td[2]")
@@ -195,7 +212,6 @@ class VerySpider(BaseProductsSpider):
             feature = {f_name: features_value_content} if features_value_content else {f_name: ""}
             features.append(feature)
         return features
-        
 
     def _scrape_total_matches(self, response):
         if self.retailer_id:
@@ -207,7 +223,7 @@ class VerySpider(BaseProductsSpider):
             totals = totals[0].encode('utf8').strip()
             totals = re.search("[0-9]+[)]", str(totals))
             if totals:
-                totals = totals.group(0).replace(')','').replace(',', '').replace('.', '').strip()
+                totals = totals.group(0).replace(')', '').replace(',', '').replace('.', '').strip()
                 if totals.isdigit():
                     if not self.TOTAL_MATCHES:
                         self.TOTAL_MATCHES = int(totals)
@@ -232,11 +248,11 @@ class VerySpider(BaseProductsSpider):
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
             return None
-        #search_term = response.meta['search_term']
+        # search_term = response.meta['search_term']
         self.current_page += 1
-        if self.current_page==2:
+        if self.current_page == 2:
             self.SEARCH_URL = response.url
-        #else:
+        # else:
         #    self.SEARCH_URL = self.SEARCH_URL.split('?pageNumber=')[0]
         if self.current_page < math.ceil(self.TOTAL_MATCHES / 12.0):
             next_page = self.SEARCH_URL + "?pageNumber=" + str(self.current_page)
