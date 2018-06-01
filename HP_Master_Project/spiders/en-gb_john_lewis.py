@@ -193,18 +193,15 @@ class AgrosSpider(BaseProductsSpider):
             price = float(price.replace(",", "").strip('\n').strip().strip('£'))
             return price
 
-    @staticmethod
-    def _parse_stock_status(response):
-        stock_value = 4
+    def _parse_stock_status(self, response):
+        stock_value = self.STOCK_STATUS['OTHER']
         stock_status = response.css('div.add-to-basket-summary-and-cta button::text').extract_first()
         if stock_status:
             stock_status = stock_status.lower()
-
             if 'out of stock' in stock_status:
-                stock_value = 0
-
-            if 'add to basket' in stock_status:
-                stock_value = 1
+                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+            elif 'add to basket' in stock_status:
+                stock_value = self.STOCK_STATUS['IN_STOCK']
         return stock_value
 
     @staticmethod
