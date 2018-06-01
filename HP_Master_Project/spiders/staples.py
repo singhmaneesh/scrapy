@@ -231,8 +231,8 @@ class StaplesSpider(BaseProductsSpider):
                 return None
             upc = upc[-12:]
             if len(upc) < 12:
-                count = 12-len(upc)
-                upc = '0'*count + upc
+                count = 12 - len(upc)
+                upc = '0' * count + upc
             return upc
         except Exception as e:
             self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
@@ -249,9 +249,9 @@ class StaplesSpider(BaseProductsSpider):
         try:
             jsonresponse = json.loads(response.body_as_unicode())
             if u'currentlyOutOfStock' in jsonresponse['cartAction']:
-                product['productstockstatus'] = 0
+                product['productstockstatus'] = self.STOCK_STATUS['OUT_OF_STOCK']
             else:
-                product['productstockstatus'] = 1
+                product['productstockstatus'] = self.STOCK_STATUS['IN_STOCK']
 
             product['price'] = jsonresponse['pricing']['nowPrice']
             if not product['price']:
@@ -298,7 +298,7 @@ class StaplesSpider(BaseProductsSpider):
         try:
             feature_list = []
             js_data = self.parse_js_data(response)
-            features = js_data['description']['bullets'] if 'bullets'  in js_data['description'] else []
+            features = js_data['description']['bullets'] if 'bullets' in js_data['description'] else []
             for feat in features:
                 feature = feat['value']
                 if ':' in feature:
