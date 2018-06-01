@@ -164,25 +164,20 @@ class ZonesSpider(BaseProductsSpider):
 
     def _parse_stock_status(self, response):
         product = response.meta['product']
-        stock_value = 4
+        stock_value = self.STOCK_STATUS['OTHER']  # default or not available
 
         try:
             stock_message = re.search("<stockMessage>(.*)</stockMessage>", response.body)
+
             if stock_message:
                 stock_message = stock_message.group(1)
 
                 if stock_message.lower() == 'in stock':
-                    stock_value = 1
+                    stock_value = self.STOCK_STATUS['IN_STOCK']
                 elif stock_message.lower() == 'out of stock':
-                    stock_value = 0
+                    stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
                 elif stock_message.lower() == 'call for availability':
-                    stock_value = 2
-                elif stock_message.lower() == 'discontinued':
-                    stock_value = 3
-                else:
-                    stock_value = 4
-            else:
-                stock_value = 4
+                    stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
             product['productstockstatus'] = stock_value
             return product
@@ -209,9 +204,11 @@ class ZonesSpider(BaseProductsSpider):
 
     @staticmethod
     def _parse_price(response):
-        price = response.xpath('//p[contains(@class, "prod-price") and contains(@class, "no_rebate--price")]/text()').extract()
+        price = response.xpath(
+            '//p[contains(@class, "prod-price") and contains(@class, "no_rebate--price")]/text()').extract()
         if not price:
-            price = response.xpath('//span[contains(@class, "prod-price") and contains(@class, "after-rebate") and contains(@class, "yes_rebate--price")]/text()').extract()
+            price = response.xpath(
+                '//span[contains(@class, "prod-price") and contains(@class, "after-rebate") and contains(@class, "yes_rebate--price")]/text()').extract()
 
         if price:
             return float(price[0].replace("$", "").replace(",", ""))
@@ -291,19 +288,19 @@ class ZonesSpider(BaseProductsSpider):
             current_page = 1
 
         if (total_matches and results_per_page and
-                    current_page < math.ceil(total_matches / float(results_per_page))):
+                current_page < math.ceil(total_matches / float(results_per_page))):
             current_page += 1
             meta['current_page'] = current_page
 
             return FormRequest(
                 url=self.PAGINATE_URL,
                 formdata={
-                  "searchType": "browse_search",
-                  "submit_name": "select_compare_form",
-                  "page_number": str(current_page),
-                  "partner_id": "",
-                  "compareChecks": "",
-                  "compare_maxed": ""
+                    "searchType": "browse_search",
+                    "submit_name": "select_compare_form",
+                    "page_number": str(current_page),
+                    "partner_id": "",
+                    "compareChecks": "",
+                    "compare_maxed": ""
                 },
                 dont_filter=True,
                 headers=self.HEADERS,
