@@ -25,11 +25,13 @@ def compose(*funcs):
 
     All functions save the last one must take a single argument.
     """
+
     def _c(*args):
         res = args
         for f in reversed(funcs):
             res = [f(*res)]
         return res
+
     return _c
 
 
@@ -161,28 +163,35 @@ class BaseProductsSpider(Spider):
 
     MAX_RETRIES = 3
 
+    STOCK_STATUS = {
+                    'OTHER': -2,
+                    'OUT_OF_STOCK': -1,
+                    'CALL_FOR_AVAILABILITY': 0,
+                    'IN_STOCK': 1,
+                    }
+
     USER_AGENTS = {
-        'default': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:35.0) '\
-            'Gecko/20100101 Firefox/35.0',
-        'desktop': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:35.0) '\
-            'Gecko/20100101 Firefox/35.0',
-        'iphone_ipad': 'Mozilla/5.0 (iPhone; CPU iPhone OS 7_0_6 '\
-            'like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) '\
-            'Version/7.0 Mobile/11B651 Safari/9537.53',
-        'android_phone': 'Mozilla/5.0 (Android; Mobile; rv:35.0) '\
-            'Gecko/35.0 Firefox/35.0',
-        'android_pad': 'Mozilla/5.0 (Android; Tablet; rv:35.0) '\
-            'Gecko/35.0 Firefox/35.0',
-        'android': 'Mozilla/5.0 (Android; Tablet; rv:35.0) '\
-            'Gecko/35.0 Firefox/35.0',
-        'iphone6': 'Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X)'\
-            ' AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25',
-        'ipad6': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26'\
-                ' (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25',
-        'iphone4': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us)'\
-            ' AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7',
-        'ipad4': 'Mozilla/5.0 (iPad; U; CPU iPhone OS 4_0 like Mac OS X; en-us)'\
-            ' AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
+        'default': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:35.0) ' \
+                   'Gecko/20100101 Firefox/35.0',
+        'desktop': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:35.0) ' \
+                   'Gecko/20100101 Firefox/35.0',
+        'iphone_ipad': 'Mozilla/5.0 (iPhone; CPU iPhone OS 7_0_6 ' \
+                       'like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) ' \
+                       'Version/7.0 Mobile/11B651 Safari/9537.53',
+        'android_phone': 'Mozilla/5.0 (Android; Mobile; rv:35.0) ' \
+                         'Gecko/35.0 Firefox/35.0',
+        'android_pad': 'Mozilla/5.0 (Android; Tablet; rv:35.0) ' \
+                       'Gecko/35.0 Firefox/35.0',
+        'android': 'Mozilla/5.0 (Android; Tablet; rv:35.0) ' \
+                   'Gecko/35.0 Firefox/35.0',
+        'iphone6': 'Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X)' \
+                   ' AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25',
+        'ipad6': 'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26' \
+                 ' (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25',
+        'iphone4': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us)' \
+                   ' AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7',
+        'ipad4': 'Mozilla/5.0 (iPad; U; CPU iPhone OS 4_0 like Mac OS X; en-us)' \
+                 ' AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
     }
     headers = {}
 
@@ -322,7 +331,7 @@ class BaseProductsSpider(Spider):
         if hasattr(self, 'handle_httpstatus_list'):
             for _code in self.handle_httpstatus_list:
                 if response.status == _code:
-                    _callable = getattr(self, 'parse_'+str(_code), None)
+                    _callable = getattr(self, 'parse_' + str(_code), None)
                     if callable(_callable):
                         yield _callable()
 
@@ -342,7 +351,7 @@ class BaseProductsSpider(Spider):
             prods_count += 1  # Fix counter.
 
             request = self._get_next_products_page(response, prods_count)
-            if prods_count == 0 and type(request) is dict and not request['next_page_found'] :
+            if prods_count == 0 and type(request) is dict and not request['next_page_found']:
                 response = self._set_product_meta(response)
                 yield self.parse_product(response)
             else:
@@ -375,7 +384,7 @@ class BaseProductsSpider(Spider):
             scraped_results_per_page = self._scrape_results_per_page(response)
             if scraped_results_per_page:
                 self.log(
-                    "Found %s products at the first page" %scraped_results_per_page
+                    "Found %s products at the first page" % scraped_results_per_page
                     , INFO)
             else:
                 scraped_results_per_page = prods_per_page
@@ -394,7 +403,7 @@ class BaseProductsSpider(Spider):
                 if hasattr(self, 'is_nothing_found'):
                     if not self.is_nothing_found(response):
                         self.log(
-                            "Failed to parse total matches for %s" % response.url,ERROR)
+                            "Failed to parse total matches for %s" % response.url, ERROR)
 
         if total_matches and not prods_per_page:
             # Parsing the page failed. Give up.
@@ -455,9 +464,9 @@ class BaseProductsSpider(Spider):
                 else:
                     url = urlparse.urljoin(response.url, next_page)
                     new_meta = dict((k, v) for k, v in response.meta.iteritems()
-                        if k in ['remaining', 'total_matches', 'search_term',
-                            'products_per_page', 'scraped_results_per_page']
-                    )
+                                    if k in ['remaining', 'total_matches', 'search_term',
+                                             'products_per_page', 'scraped_results_per_page']
+                                    )
                     new_meta['remaining'] = remaining
                     result = Request(url, self.parse, meta=new_meta, priority=1)
         elif link_page_attempt > self.MAX_RETRIES:
