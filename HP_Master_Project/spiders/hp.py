@@ -165,21 +165,17 @@ class HpSpider(BaseProductsSpider):
             return self.clear_text(sku[0])
 
     def _parse_stock_status(self, response):
-        stock_value = 4
+        stock_value = self.STOCK_STATUS['OTHER']
         try:
             stock_message = response.xpath('//*[@itemprop="availability"]/@href')[0].extract()
             if 'instock' in stock_message.lower():
-                stock_value = 1
-            if 'outofstock' in stock_message.lower():
-                stock_value = 0
-            if 'callforavailability' in stock_message.lower():
-                stock_value = 2
-            if 'discontinued' in stock_message.lower():
-                stock_value = 3
-
+                stock_value = self.STOCK_STATUS['IN_STOCK']
+            elif 'outofstock' in stock_message.lower():
+                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+            elif 'callforavailability' in stock_message.lower():
+                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
         except BaseException as e:
             self.log("Error parsing stock status data: {}".format(e), WARNING)
-
         return stock_value
 
     @staticmethod
