@@ -1,17 +1,14 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-from scrapy.log import WARNING
-from scrapy import Request
-import re
 import json
 import math
+import re
+
 import requests
 
-from HP_Master_Project.utils import is_empty
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider, FormatterWithDefaults
-from HP_Master_Project.extract_brand import extract_brand_from_first_words
 
 
 class CurrysSpider(BaseProductsSpider):
@@ -19,10 +16,12 @@ class CurrysSpider(BaseProductsSpider):
     allowed_domains = ['currys.co.uk', 'www.currys.co.uk']
 
     SEARCH_URL = "https://www.currys.co.uk/gbuk/search-keywords/xx_xx_xx_xx_xx/{search_term}/{page_num}_50/" \
-                "relevance-desc/xx-criteria.html"
+                 "relevance-desc/xx-criteria.html"
 
     API_URL = \
-        'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
+        'https://admin.metalocator.com/webapi/api/matchedretailerproducturls?Itemid=8343' \
+        '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
+        '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
     TOTAL_MATCHES = None
 
@@ -34,14 +33,14 @@ class CurrysSpider(BaseProductsSpider):
         self.url_formatter = FormatterWithDefaults(page_num=1)
 
     def start_requests(self):
-        #print "Start Requests Called"
+        # print "Start Requests Called"
         for request in super(CurrysSpider, self).start_requests():
             if not self.product_url:
                 request = request.replace(callback=self.parse_search, dont_filter=True)
             yield request
 
     def parse_search(self, response):
-        #print "Parse Search Called"
+        # print "Parse Search Called"
         page_title = response.xpath('//div[@class="col12 resultList"]').extract()
         if page_title or self.retailer_id:
             return self.parse(response)
@@ -49,7 +48,7 @@ class CurrysSpider(BaseProductsSpider):
             return self._parse_single_product(response)
 
     def _parse_single_product(self, response):
-        #print "Parse Single Product Called"
+        # print "Parse Single Product Called"
         return self.parse_product(response)
 
     def parse_product(self, response):
@@ -77,8 +76,8 @@ class CurrysSpider(BaseProductsSpider):
         product['categories'] = categories
 
         # Parse unspec DOUBT DOUBT
-        #unspec = self._parse_unspec(response)
-        #product['unspec'] = unspec
+        # unspec = self._parse_unspec(response)
+        # product['unspec'] = unspec
 
         # Parse currencycode
         product['currencycode'] = 'GBP'
@@ -109,80 +108,98 @@ class CurrysSpider(BaseProductsSpider):
         # Parse features
         features = self._parse_features(response)
         product['features'] = features
-        
+
         # Parse condition
         product['condition'] = 1
 
         return product
 
-    def _parse_name(self, response):
+    @staticmethod
+    def _parse_name(response):
         name = response.xpath("//h1[@class='page-title nosp']//text()").extract()
         if name:
             name = ''.join(name)
             name = ' '.join(name.split())
             return name
 
-    def _parse_brand(self, response):
+    @staticmethod
+    def _parse_brand(response):
         brand = response.xpath("//script[@type='application/ld+json'][2]") \
-                .xpath("text()").extract()[0].encode('utf-8').replace("\n","").replace(" ","").strip()
-        jsonData = json.loads(brand.replace("\"priceCurrency\":\"GBP\"}}","}}"))
-        brand = jsonData['brand']['name']
+            .xpath("text()").extract()[0].encode('utf-8').replace("\n", "").replace(" ", "").strip()
+        json_data = json.loads(brand.replace("\"priceCurrency\":\"GBP\"}}", "}}"))
+        brand = json_data['brand']['name']
 
         if brand:
             return brand
 
-    def _parse_sku(self, response):
+    @staticmethod
+    def _parse_sku(response):
         sku = response.xpath("//script[@type='application/ld+json'][2]") \
-                .xpath("text()").extract()[0].encode('utf-8').replace("\n","").replace(" ","").strip()
-        jsonData = json.loads(sku.replace("\"priceCurrency\":\"GBP\"}}","}}"))
-        sku = jsonData['sku']
+            .xpath("text()").extract()[0].encode('utf-8').replace("\n", "").replace(" ", "").strip()
+        json_data = json.loads(sku.replace("\"priceCurrency\":\"GBP\"}}", "}}"))
+        sku = json_data['sku']
 
         if sku:
             return sku
 
     def _parse_stock_status(self, response):
         stock_status = response.xpath("//script[@type='application/ld+json'][2]") \
-                .xpath("text()").extract()[0].encode('utf-8').replace("\n","").replace(" ","").strip()
-        jsonData = json.loads(stock_status.replace("\"priceCurrency\":\"GBP\"}}","}}"))
-        stock_status = jsonData['offers']['availability']
+            .xpath("text()").extract()[0].encode('utf-8').replace("\n", "").replace(" ", "").strip()
+        json_data = json.loads(stock_status.replace("\"priceCurrency\":\"GBP\"}}", "}}"))
+        stock_status = json_data['offers']['availability']
         if stock_status:
-            return stock_status.replace("http://schema.org/","").strip()
+            stock_status = stock_status.replace("http://schema.org/", "").strip()
+            if stock_status == 'InStock':
+                return self.STOCK_STATUS['IN_STOCK']
+            elif stock_status == 'InStoreOnly':
+                return self.STOCK_STATUS['OTHER']
+            elif stock_status == 'OutOfStock':
+                return self.STOCK_STATUS['OUT_OF_STOCK']
+            else:
+                return self.STOCK_STATUS['OTHER']
 
-    def _parse_retailer_key(self, response):
+    @staticmethod
+    def _parse_retailer_key(response):
         retailer_key = response.xpath("//p[@class='prd-code']/text()").extract()[0] \
-            .replace("Product code: ","").encode('utf-8')
+            .replace("Product code: ", "").encode('utf-8')
         if retailer_key:
             return retailer_key
 
-    def _parse_image(self, response):
+    @staticmethod
+    def _parse_image(response):
         image = response.xpath("//a[@class='to-print MagicZoomPlus']//img[@class='product-image']/@src").extract()
         if image:
             return image[0]
 
-    def _parse_model(self, response):
+    @staticmethod
+    def _parse_model(response):
         model = response.xpath("//div[@class='section space-b']").xpath("ul//li[contains(.,'MPN')]/text()").extract()
         if model:
             return model[0]
 
-    def _parse_categories(self, response):
+    @staticmethod
+    def _parse_categories(response):
         categories = response.xpath("//div[@class='breadcrumb']/a/span/text()").extract()
         if categories:
             categories.remove(u'Home')
-            #model = '|'.join(model)
+            # model = '|'.join(model)
             return categories
 
-    def _parse_price(self, response):
+    @staticmethod
+    def _parse_price(response):
         price = response.xpath("//strong[@data-key='current-price']/text()").extract()
         if price:
             x = price[0].encode('utf8')
             x = x[2:]
             return x
 
-    def _parse_gallery(self, response):
+    @staticmethod
+    def _parse_gallery(response):
         gallery = response.xpath("//div[@id='carousel']//li/a/@href").extract()
         return gallery
 
-    def _parse_features(self, response):
+    @staticmethod
+    def _parse_features(response):
         features = []
         features_name = response.xpath("//table[@class='simpleTable']/tbody/tr/th/text()").extract()
         features_value = response.xpath("//table[@class='simpleTable']/tbody/tr/td")
@@ -198,12 +215,12 @@ class CurrysSpider(BaseProductsSpider):
         return features
 
     def _scrape_total_matches(self, response):
-        #print "Scrape Total Matches Called"
+        # print "Scrape Total Matches Called"
         if self.retailer_id:
             data = json.loads(response.body)
             return len(data)
 
-        totals = response.xpath("//section[@class='col9']/div/strong/text()").extract()
+        totals = response.xpath("//section[@class='col9']/div/div/strong/text()").extract()
         totals = ''.join(totals).strip()
         if totals:
             totals = re.search("(\d+) results", str(totals))
@@ -215,7 +232,7 @@ class CurrysSpider(BaseProductsSpider):
                     return int(totals)
 
     def _scrape_product_links(self, response):
-        #print "Scrape Product Links Called"
+        # print "Scrape Product Links Called"
         link_list = []
         if self.retailer_id:
             data = requests.get(self.API_URL.format(retailer_id=self.retailer_id)).json()
@@ -231,7 +248,7 @@ class CurrysSpider(BaseProductsSpider):
                 yield link, ProductItem()
 
     def _scrape_next_results_page_link(self, response):
-        #print "Scrape Next Results Page Called"
+        # print "Scrape Next Results Page Called"
         if self.retailer_id:
             return None
         search_term = response.meta['search_term']
