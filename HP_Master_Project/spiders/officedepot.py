@@ -123,20 +123,18 @@ class OfficedepotProductsSpider(BaseProductsSpider):
 
     def _parse_product_stock_status(self, response):
         product = response.meta['product']
-        stock_value = 4
+        stock_value = self.STOCK_STATUS['OTHER']
 
         try:
             stock_message = response.xpath('//meta[@itemprop="availability"]/@content').extract()
             if stock_message:
                 stock_message = stock_message[0]
                 if 'instock' in stock_message.lower():
-                    stock_value = 1
-                if 'outofstock' in stock_message.lower():
-                    stock_value = 0
-                if 'callforavailability' in stock_message.lower():
-                    stock_value = 2
-                if 'discontinued' in stock_message.lower():
-                    stock_value = 3
+                    stock_value = self.STOCK_STATUS['IN_STOCK']
+                elif 'outofstock' in stock_message.lower():
+                    stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+                elif 'callforavailability' in stock_message.lower():
+                    stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
                 product['productstockstatus'] = stock_value
                 return product
@@ -320,9 +318,9 @@ class OfficedepotProductsSpider(BaseProductsSpider):
     def _replace_nao(self, url, new_nao):
         current_nao = self._get_nao(url)
         if current_nao:
-            return re.sub(r'nao=\d+', 'nao='+str(new_nao), url)
+            return re.sub(r'nao=\d+', 'nao=' + str(new_nao), url)
         else:
-            return url+'&nao='+str(new_nao)
+            return url + '&nao=' + str(new_nao)
 
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
@@ -334,7 +332,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         if self.CURRENT_NAO > self.quantity + self.PAGINATE_BY:
             return
         self.CURRENT_NAO += self.PAGINATE_BY
-        if '/a/browse/' in response.url:    # paginate in category or subcategory
+        if '/a/browse/' in response.url:  # paginate in category or subcategory
             new_paginate_url = self.parse_paginate_link(response, self.CURRENT_NAO)
             if new_paginate_url:
                 return Request(new_paginate_url, callback=self.parse, meta=response.meta, dont_filter=True)
