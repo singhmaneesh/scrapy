@@ -34,7 +34,6 @@ class EnGbHpSpider(BaseProductsSpider):
         self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " \
                           "Chrome/60.0.3112.90 Safari/537.36"
 
-
     def _parse_single_product(self, response):
         return self.parse_product(response)
 
@@ -84,23 +83,23 @@ class EnGbHpSpider(BaseProductsSpider):
         if img:
             return img[0]
 
-    def _parse_sku(self, response):
+    @staticmethod
+    def _parse_sku(response):
         sku = response.xpath('//*[@itemprop="sku"]/@content')[0].extract()
         return sku
 
-
     def _parse_stock_status(self, response):
-        stock_value = 4
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
         try:
             stock_message = response.xpath('//*[@itemprop="availability"]/@content')[0].extract()
             if 'instock' in stock_message.lower():
-                stock_value = 1
-            if 'outofstock' in stock_message.lower():
-                stock_value = 0
-            if 'callforavailability' in stock_message.lower():
-                stock_value = 2
-            if 'discontinued' in stock_message.lower():
-                stock_value = 3
+                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+            elif 'outofstock' in stock_message.lower():
+                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+            elif 'callforavailability' in stock_message.lower():
+                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+            elif 'discontinued' in stock_message.lower():
+                stock_value = self.STOCK_STATUS['OTHER']
 
         except BaseException as e:
             self.log("Error parsing stock status data: {}".format(e), WARNING)
@@ -160,7 +159,7 @@ class EnGbHpSpider(BaseProductsSpider):
             key = f_name.xpath('.//th/text()').extract()
             value = f_name.xpath('.//td/text()').extract()
             if value:
-                features.append({key[0]:value[0]})
+                features.append({key[0]: value[0]})
         return features
 
     def clear_text(self, str_result):

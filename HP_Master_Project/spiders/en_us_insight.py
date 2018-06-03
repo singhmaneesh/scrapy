@@ -23,11 +23,9 @@ class EnUsInsightSpider(BaseProductsSpider):
               '&apikey=f5e4337a05acceae50dc116d719a2875&username=fatica%2Bscrapingapi@gmail.com' \
               '&password=8y3$u2ehu2e..!!$$&retailer_id={retailer_id}'
 
-
     def __init__(self, *args, **kwargs):
-        self.current_page=0
+        self.current_page = 0
         super(EnUsInsightSpider, self).__init__(site_name=self.allowed_domains[0], *args, **kwargs)
-
 
     def start_requests(self):
         for request in super(EnUsInsightSpider, self).start_requests():
@@ -37,13 +35,11 @@ class EnUsInsightSpider(BaseProductsSpider):
                 request = request.replace(callback=self.parse_search)
             yield request
 
-
     def parse_search(self, response):
         payload = json.dumps(self.get_next_products_payload(page=1))
-        self.current_page+=1
+        self.current_page += 1
         return [scrapy.Request(url=self.products_api, method='POST', body=payload,
                                headers={'Content-Type': 'application/json'}, meta=response.meta)]
-
 
     def _scrape_results_per_page(self, response):
         result_per_page = None
@@ -59,7 +55,6 @@ class EnUsInsightSpider(BaseProductsSpider):
             except Exception as e:
                 self.logger.error(e.message)
         return result_per_page
-
 
     def _scrape_product_links(self, response):
         self.logger.info("Start parsing products response")
@@ -101,9 +96,10 @@ class EnUsInsightSpider(BaseProductsSpider):
                             payload = json.dumps(self.get_product_payload(json_response, mfr_part_id))
                             meta = response.meta
                             meta['fire'] = True
-                            product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, meta=meta,
+                            product_request = scrapy.Request(url=self.product_api, method='POST', body=payload,
+                                                             meta=meta,
                                                              headers={'Content-Type': 'application/json'},
-                                                             callback = self.parse, dont_filter = True)
+                                                             callback=self.parse, dont_filter=True)
                             yield product_request, ProductItem()
                 else:
                     for i in range(num_products):
@@ -111,11 +107,11 @@ class EnUsInsightSpider(BaseProductsSpider):
                         payload = json.dumps(self.get_product_payload(json_response, mfr_part_id))
                         meta = response.meta
                         meta['fire'] = True
-                        product_request = scrapy.Request(url=self.product_api, method='POST', body=payload, dont_filter=True,
+                        product_request = scrapy.Request(url=self.product_api, method='POST', body=payload,
+                                                         dont_filter=True,
                                                          headers={'Content-Type': 'application/json'},
                                                          meta=meta, callback=self.parse, )
                         yield product_request, ProductItem()
-
 
     def _scrape_total_matches(self, response):
         if self.retailer_id:
@@ -144,7 +140,6 @@ class EnUsInsightSpider(BaseProductsSpider):
                 return None
         return total_matches
 
-
     def _scrape_next_results_page_link(self, response):
         if self.retailer_id:
             return None
@@ -160,19 +155,17 @@ class EnUsInsightSpider(BaseProductsSpider):
         else:
             current_page = self.get_current_page(self, json_response)
             if current_page:
-                payload = json.dumps(self.get_next_products_payload(page=current_page+1))
+                payload = json.dumps(self.get_next_products_payload(page=current_page + 1))
                 next_page_request = scrapy.Request(url=self.products_api, method='POST', body=payload, dont_filter=True,
-                                               headers={'Content-Type': 'application/json'}, meta=response.meta)
+                                                   headers={'Content-Type': 'application/json'}, meta=response.meta)
             else:
                 payload = json.dumps(self.get_next_products_payload(page=1))
                 next_page_request = scrapy.Request(url=self.products_api, method='POST', body=payload, dont_filter=True,
                                                    headers={'Content-Type': 'application/json'}, meta=response.meta)
         return next_page_request
 
-
     def _parse_single_product(self, response):
         return self.parse_product(response)
-
 
     def parse_product(self, response):
         meta = response.meta.copy()
@@ -185,7 +178,6 @@ class EnUsInsightSpider(BaseProductsSpider):
             self.logger.error(e.message)
         else:
             return self.parse_product_item(json_response, product)
-
 
     def parse_product_item(self, json_response, product):
         if json_response.get("webProduct"):
@@ -214,20 +206,19 @@ class EnUsInsightSpider(BaseProductsSpider):
 
     def get_availability(self, json_response):
         if not json_response["webProduct"]["availabilityInfos"][0]["stockAvailability"] and \
-                        json_response["webProduct"]["availabilityInfos"][0]["availablityMessage"] \
-                        == "availability.status.callforavailability":
-            return 2
+                json_response["webProduct"]["availabilityInfos"][0]["availablityMessage"] \
+                == "availability.status.callforavailability":
+            return self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
         else:
-            return 0
+            return self.STOCK_STATUS['IN_STOCK']
 
     def get_product_features(self, json_response):
         features = []
         for specs in json_response["webProduct"]["extendedSpecsMap"]:
             for spec in range(len(json_response["webProduct"]["extendedSpecsMap"][specs]["details"])):
                 features.append({json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["label"]:
-                                 json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["value"]})
+                                     json_response["webProduct"]["extendedSpecsMap"][specs]["details"][spec]["value"]})
         return features
-
 
     def get_product_url(self, json_response):
         insight_part_id = json_response["webProduct"]["insightPartNumber"]
@@ -238,9 +229,8 @@ class EnUsInsightSpider(BaseProductsSpider):
                                       mfr_name=mfr_name, product_name=product_name)
 
     def get_mfr_part_num_from_url(self, url):
-        mfr_part_id = re.findall(r'/[a-zA-Z0-9%]+/', url)[1].replace('/','').replace('%23','#')
+        mfr_part_id = re.findall(r'/[a-zA-Z0-9%]+/', url)[1].replace('/', '').replace('%23', '#')
         return mfr_part_id
-
 
     @staticmethod
     def get_current_page(self, json_response):
@@ -250,7 +240,6 @@ class EnUsInsightSpider(BaseProductsSpider):
         except Exception as e:
             self.logger.error(e.message)
         return current_page
-
 
     @staticmethod
     def get_product_payload(json_response, mfr_part_id):
@@ -267,7 +256,6 @@ class EnUsInsightSpider(BaseProductsSpider):
                    "contractId": None}
         return payload
 
-
     @staticmethod
     def parse_product_url(insight_id, mfr_id, mfr_name, product_name):
         base_url = u'http://www.insight.com/en_US/buy/product/'
@@ -280,7 +268,6 @@ class EnUsInsightSpider(BaseProductsSpider):
         product_path = product_name.replace(' ', '-')
         product_url = quoted_url + '/' + product_path + '/'
         return product_url
-
 
     @staticmethod
     def get_next_products_payload(page, search_keyword="HP"):

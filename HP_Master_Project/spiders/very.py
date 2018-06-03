@@ -137,15 +137,13 @@ class VerySpider(BaseProductsSpider):
 
     def _parse_stock_status(self, response):
         stock_status = response.xpath("//meta[@property='product:availability']/@content").extract()
-        stock_value = self.STOCK_STATUS['OTHER']
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
         if stock_status:
             stock_status = stock_status[0]
             if stock_status == 'In Stock':
                 stock_value = self.STOCK_STATUS['IN_STOCK']
             elif stock_status == 'Out Of Stock':
                 stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-            elif stock_status == 'Call For Availability':
-                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
         return stock_value
 

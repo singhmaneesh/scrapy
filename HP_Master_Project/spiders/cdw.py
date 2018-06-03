@@ -229,7 +229,7 @@ class CdwSpider(BaseProductsSpider):
         return "".join(shipping_phrase).strip()
 
     def _parse_stock_status(self, response):
-        stock_value = self.STOCK_STATUS['OTHER']
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
         stock_status = response.xpath('//link[@itemprop="availability"]/@href').extract()
         if stock_status:
@@ -238,8 +238,8 @@ class CdwSpider(BaseProductsSpider):
                 stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
             elif 'instock' in stock_status:
                 stock_value = self.STOCK_STATUS['IN_STOCK']
-            elif self._parse_shippingphrase(response) == 'Call for availability':
-                stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+            elif 'discontinued' in stock_status:
+                stock_value = self.STOCK_STATUS['OTHER']
 
         return stock_value
 

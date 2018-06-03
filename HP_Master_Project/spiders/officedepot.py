@@ -123,7 +123,7 @@ class OfficedepotProductsSpider(BaseProductsSpider):
 
     def _parse_product_stock_status(self, response):
         product = response.meta['product']
-        stock_value = self.STOCK_STATUS['OTHER']
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
         try:
             stock_message = response.xpath('//meta[@itemprop="availability"]/@content').extract()
@@ -133,8 +133,6 @@ class OfficedepotProductsSpider(BaseProductsSpider):
                     stock_value = self.STOCK_STATUS['IN_STOCK']
                 elif 'outofstock' in stock_message.lower():
                     stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-                elif 'callforavailability' in stock_message.lower():
-                    stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
                 product['productstockstatus'] = stock_value
                 return product

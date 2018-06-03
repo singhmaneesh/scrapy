@@ -156,7 +156,7 @@ class CurrysSpider(BaseProductsSpider):
             elif stock_status == 'OutOfStock':
                 return self.STOCK_STATUS['OUT_OF_STOCK']
             else:
-                return self.STOCK_STATUS['OTHER']
+                return self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
     @staticmethod
     def _parse_retailer_key(response):

@@ -194,7 +194,7 @@ class AgrosSpider(BaseProductsSpider):
             return price
 
     def _parse_stock_status(self, response):
-        stock_value = self.STOCK_STATUS['OTHER']
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
         stock_status = response.css('div.add-to-basket-summary-and-cta button::text').extract_first()
         if stock_status:
             stock_status = stock_status.lower()

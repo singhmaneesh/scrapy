@@ -73,12 +73,14 @@ class AgrosSpider(BaseProductsSpider):
         model = self._parse_model(response)
         product['model'] = model
 
+        product['productstockstatus'] = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+
         product['ean'] = self._parse_ean(response)
 
         # Parse categories
         categories = self._parse_categories(response)
         product['categories'] = categories
-        
+
         sku = self._parse_sku(response)
         product['sku'] = sku
 
@@ -134,7 +136,7 @@ class AgrosSpider(BaseProductsSpider):
     def _parse_categories(response):
         categories = response.css('li.breadcrumb__item span[itemprop="name"]::text').extract()
         return categories
-    
+
     @staticmethod
     def _parse_sku(response):
         sku = response.url.rsplit('/', 1)[1]
@@ -154,7 +156,7 @@ class AgrosSpider(BaseProductsSpider):
         if model:
             model = model.group(1).strip()
             return clean_text(self, model)
-    
+
     @staticmethod
     def _parse_currency_code(response):
         currency_code = response.css('span[itemprop="priceCurrency"]::attr(content)').extract()

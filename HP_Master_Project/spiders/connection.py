@@ -169,24 +169,19 @@ class ConnectionSpider(BaseProductsSpider):
         shipping_phrase = extract_first(response.xpath('//span[@id="productEstimatedShipping"]/text()'))
         return shipping_phrase
 
-    @staticmethod
-    def _parse_stock_status(response):
-        stock_value = 4
+    def _parse_stock_status(self, response):
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
         stock_status = extract_first(response.xpath('//span[@id="productAvailability"]/text()'))
         stock_status = stock_status.lower()
 
         if stock_status == 'out of stock':
-            stock_value = 0
-
-        if stock_status == 'in stock':
-            stock_value = 1
-
-        if stock_status == 'call for availability':
-            stock_value = 2
-
-        if stock_status == 'discontinued':
-            stock_value = 3
-
+            stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+        elif stock_status == 'in stock':
+            stock_value = self.STOCK_STATUS['IN_STOCK']
+        elif stock_status == 'call for availability':
+            stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+        elif stock_status == 'discontinued':
+            stock_value = self.STOCK_STATUS['OTHER']
         return stock_value
 
     def _parse_features(self, response):
@@ -272,7 +267,7 @@ class ConnectionSpider(BaseProductsSpider):
         self.current_page += 1
 
         if (self.TOTAL_MATCHES and self.RESULT_PER_PAGE and
-                    self.current_page < math.ceil(self.TOTAL_MATCHES / float(self.RESULT_PER_PAGE))):
+                self.current_page < math.ceil(self.TOTAL_MATCHES / float(self.RESULT_PER_PAGE))):
             next_page = self.Paginate_URL.format(page_num=self.current_page,
                                                  result_per_page=self.RESULT_PER_PAGE)
             return next_page
