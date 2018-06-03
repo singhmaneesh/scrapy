@@ -164,7 +164,7 @@ class ZonesSpider(BaseProductsSpider):
 
     def _parse_stock_status(self, response):
         product = response.meta['product']
-        stock_value = self.STOCK_STATUS['OTHER']  # default or not available
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']  # default or not available
 
         try:
             stock_message = re.search("<stockMessage>(.*)</stockMessage>", response.body)
@@ -176,8 +176,8 @@ class ZonesSpider(BaseProductsSpider):
                     stock_value = self.STOCK_STATUS['IN_STOCK']
                 elif stock_message.lower() == 'out of stock':
                     stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-                elif stock_message.lower() == 'call for availability':
-                    stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+                elif stock_message.lower() == 'discontinued':
+                    stock_value = self.STOCK_STATUS['OTHER']
 
             product['productstockstatus'] = stock_value
             return product
