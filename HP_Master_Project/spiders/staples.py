@@ -1,26 +1,26 @@
 # - * - coding: utf-8 -*-#
 from __future__ import absolute_import, division, unicode_literals
 
-from scrapy import Request
-from scrapy.log import WARNING
-import urlparse
 import json
 import re
 import time
 import traceback
-import requests
+import urlparse
 
-from HP_Master_Project.utils import clean_text
+import requests
+from scrapy import Request
+from scrapy.log import WARNING
+
 from HP_Master_Project.items import ProductItem
 from HP_Master_Project.spiders import BaseProductsSpider
-from HP_Master_Project.extract_brand import extract_brand_from_first_words
+from HP_Master_Project.utils import clean_text
 
 
 class StaplesSpider(BaseProductsSpider):
     name = 'staples_products'
     allowed_domains = ['staples.com', "www.staples.com"]
 
-    SEARCH_URL = "http://www.staples.com/{search_term}/directory_{search_term}?sby=0&pn=0&akamai-feo=off"
+    SEARCH_URL = "http://www.staples.com/{search_term}+item/directory_{search_term}%2520item?sby=0&pn=0&akamai-feo=off"
 
     PAGINATE_URL = "http://www.staples.com/{search_term}/directory_{search_term}?sby=0&pn={nao}"
 
@@ -121,8 +121,8 @@ class StaplesSpider(BaseProductsSpider):
         product['model'] = model
 
         # Parse upc
-        upc = self._parse_upc(response)
-        product['upc'] = upc
+        # upc = self._parse_upc(response)
+        # product['upc'] = upc
 
         # Parse currencycode
         product['currencycode'] = 'USD'
@@ -135,8 +135,8 @@ class StaplesSpider(BaseProductsSpider):
         product['sku'] = sku
 
         # Parse manufacturer
-        manufacturer = self._parse_manufacturer(response)
-        product['manufacturer'] = manufacturer
+        # manufacturer = self._parse_manufacturer(response)
+        # product['manufacturer'] = manufacturer
 
         # Parse categories
         categories = self._parse_categories(response)
@@ -151,49 +151,23 @@ class StaplesSpider(BaseProductsSpider):
         product['instore'] = in_store
 
         # Parse ship to store
-        ship_to_store = self._parse_shiptostore(response)
-        product['shiptostore'] = ship_to_store
+        # ship_to_store = self._parse_shiptostore(response)
+        # product['shiptostore'] = ship_to_store
 
         # Parse gallery
         product['gallery'] = self._parse_gallery(response)
 
         # Parse features
-        features = self._parse_features(response)
-        product['features'] = features
+        # features = self._parse_features(response)
+        # product['features'] = features
 
         # Parse condition
         product['condition'] = 1
 
         # Parse price
-        js_data = self.parse_js_data(response)
-        try:
-            if product.get("sku", ""):
-                prod_doc_key = js_data['prod_doc_key']
-                prod_doc_key = prod_doc_key.split("/")[:-1]
-                prod_doc_key.append(product.get("sku", ""))
-                prod_doc_key = "/".join(prod_doc_key)
-            else:
-                prod_doc_key = js_data['prod_doc_key']
-            return Request(
-                url=self.PRICE_URL.format(sku=sku,
-                                          metadata__coming_soon_flag=js_data['metadata']['coming_soon_flag'],
-                                          metadata__price_in_cart_flag=js_data['metadata']['price_in_cart_flag'],
-                                          prod_doc_key=prod_doc_key,
-                                          metadata__product_type__id=js_data['metadata']['product_type']['id'],
-                                          metadata__preorder_flag=js_data['metadata']['preorder_flag'],
-                                          street_date=time.time(),
-                                          metadata__channel_availability_for__id=
-                                          js_data['metadata']['channel_availability_for']['id'],
-                                          metadata__backorder_flag=js_data['metadata']['backorder_flag']),
-                dont_filter=True,
-                callback=self._parse_price,
-                meta=meta,
-                headers={"Referer": None, "X-Requested-With": "XMLHttpRequest",
-                         'User-Agent': 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)'}
-            )
-        except Exception as e:
-            self.log("Error while forming request for base product data: {}".format(traceback.format_exc()), WARNING)
-            return product
+        price = self._parse_price(response)
+        product['price'] = price
+        return product
 
     @staticmethod
     def _parse_name(response):
@@ -218,9 +192,9 @@ class StaplesSpider(BaseProductsSpider):
         return categories
 
     def _parse_model(self, response):
-        model = response.xpath('//span[contains(@ng-bind, "product.metadata.mfpartnumber")]/text()').extract()
+        model = response.css('span#mmx-sku-manufacturerPartNumber::text').extract_first()
         if model:
-            return self.clear_text(model[0])
+            return model
 
     def _parse_upc(self, response):
         try:
@@ -244,26 +218,32 @@ class StaplesSpider(BaseProductsSpider):
         return gallery
 
     def _parse_price(self, response):
-        meta = response.meta.copy()
-        product = response.meta['product']
-        try:
-            jsonresponse = json.loads(response.body_as_unicode())
-            if u'currentlyOutOfStock' in jsonresponse['cartAction']:
-                product['productstockstatus'] = self.STOCK_STATUS['OUT_OF_STOCK']
-            else:
-                product['productstockstatus'] = self.STOCK_STATUS['IN_STOCK']
+        price = response.css('span[itemprop="price"]::text').extract_first()
+        if not price:
+            price = response.css('div.preferred-price-discounted::text').extract_first()
+        return price
 
-            product['price'] = jsonresponse['pricing']['nowPrice']
-            if not product['price']:
-                product['price'] = jsonresponse['pricing']['finalPrice']
-            product['saleprice'] = jsonresponse['pricing']['finalPrice']
-            return product
-
-        except BaseException as e:
-            self.log("Error parsing base product data: {}".format(e), WARNING)
-            if 'No JSON object could be decoded' in e:
-                self.log("Repeating base product data request: {}".format(e), WARNING)
-                return Request(response.url, callback=self._parse_price, meta=meta, dont_filter=True)
+    # def _parse_price(self, response):
+    #     meta = response.meta.copy()
+    #     product = response.meta['product']
+    #     try:
+    #         jsonresponse = json.loads(response.body_as_unicode())
+    #         if u'currentlyOutOfStock' in jsonresponse['cartAction']:
+    #             product['productstockstatus'] = self.STOCK_STATUS['OUT_OF_STOCK']
+    #         else:
+    #             product['productstockstatus'] = self.STOCK_STATUS['IN_STOCK']
+    #
+    #         product['price'] = jsonresponse['pricing']['nowPrice']
+    #         if not product['price']:
+    #             product['price'] = jsonresponse['pricing']['finalPrice']
+    #         product['saleprice'] = jsonresponse['pricing']['finalPrice']
+    #         return product
+    #
+    #     except BaseException as e:
+    #         self.log("Error parsing base product data: {}".format(e), WARNING)
+    #         if 'No JSON object could be decoded' in e:
+    #             self.log("Repeating base product data request: {}".format(e), WARNING)
+    #             return Request(response.url, callback=self._parse_price, meta=meta, dont_filter=True)
 
     def _parse_retailer_key(self, response):
         retailer_key = response.xpath('//span[contains(@itemprop, "sku")]/text()').extract()
