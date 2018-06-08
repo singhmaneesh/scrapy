@@ -160,7 +160,7 @@ class HpSpider(BaseProductsSpider):
             return img[0]
 
     def _parse_sku(self, response):
-        sku = response.xpath('//div[@class="prodSku"]/span[@class="prodNum"]/text()').extract()
+        sku = response.xpath('//span[@itemprop="sku"]/text()').extract()
         if sku:
             return self.clear_text(sku[0])
 
