@@ -11,7 +11,7 @@ import socket
 import scrapy.log
 from scrapy.log import ERROR, WARNING, INFO
 from scrapy.http import Request
-from scrapy.spider import Spider
+from scrapy.spiders import Spider
 
 from HP_Master_Project.items import ProductItem
 

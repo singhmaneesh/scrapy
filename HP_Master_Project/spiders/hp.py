@@ -122,7 +122,7 @@ class HpSpider(BaseProductsSpider):
         product['condition'] = 1
 
         # Parse productstockstatus
-        product['productstockstatus'] = self._parse_stock_status(response)
+        # product['productstockstatus'] = self._parse_stock_status(response)
 
         # Parse categories
         product_id = re.search("productIdValue='(.*)';", response.body)
@@ -144,8 +144,9 @@ class HpSpider(BaseProductsSpider):
                 headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
                                        'Chrome/60.0.3112.90 Safari/537.36'}
             )
-
-        return product
+        response.meta['product'] = product
+        stock_url = self._get_stock_request(response)
+        return Request(stock_url, callback=self._parse_stock_status, meta=response.meta)
 
     @staticmethod
     def _parse_name(response):
@@ -164,18 +165,65 @@ class HpSpider(BaseProductsSpider):
         if sku:
             return self.clear_text(sku[0])
 
+    @staticmethod
+    def _get_stock_request(response):
+        html = response.text
+        catentry_id = re.findall('var productId = \'(\d+?)\';', html)[0]
+        store_id = re.findall('var storeId = \'(\d+?)\';', html)[0]
+        lang_id = re.findall('var langId = \'(.+?)\';', html)[0]
+        catalog_id = re.findall('var catalogId = \'(\d+?)\';', html)[0]
+        url = 'https://store.hp.com/us/en/HPServices?langId={}&storeId={}&catalogId={}&action=pis&catentryId={}&modelId='
+        return url.format(lang_id, store_id, catalog_id, catentry_id)
+
+
     def _parse_stock_status(self, response):
-        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+        data = json.loads(response.text)
+        # stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+        # STOCK_STATUS = {
+        #     'OTHER': -2,
+        #     'OUT_OF_STOCK': -1,
+        #     'CALL_FOR_AVAILABILITY': 0,
+        #     'IN_STOCK': 1,
+        # }
         try:
-            stock_message = response.xpath('//*[@itemprop="availability"]/@href')[0].extract()
-            if 'instock' in stock_message.lower():
-                stock_value = self.STOCK_STATUS['IN_STOCK']
-            elif 'outofstock' in stock_message.lower():
+            if data['inventoryData'][0]['noStock']:
                 stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-            elif 'discontinued' in stock_message.lower():
-                stock_value = self.STOCK_STATUS['OTHER']
-        except BaseException as e:
-            self.log("Error parsing stock status data: {}".format(e), WARNING)
+            else:
+                stock_value = self.STOCK_STATUS['IN_STOCK']
+        except:
+            stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+        product = response.meta['product']
+        product['productstockstatus'] = stock_value
+        yield product
+        # stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+        # try:
+        #     stock_message = response.xpath('//*[@itemprop="availability"]/@href')[0].extract()
+        #     if 'instock' in stock_message.lower():
+        #         stock_value = self.STOCK_STATUS['IN_STOCK']
+        #     elif 'outofstock' in stock_message.lower():
+        #         stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+        #     elif 'discontinued' in stock_message.lower():
+        #         stock_value = self.STOCK_STATUS['OTHER']
+        # except BaseException as e:
+        #     self.log("Error parsing stock status data: {}".format(e), WARNING)
+        # return stock_value
+
+    def parse_stock(self, response):
+        data = json.loads(response.text)
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+        STOCK_STATUS = {
+            'OTHER': -2,
+            'OUT_OF_STOCK': -1,
+            'CALL_FOR_AVAILABILITY': 0,
+            'IN_STOCK': 1,
+        }
+        try:
+            if data['inventoryData'][0]['noStock']:
+                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+            else:
+                stock_value = self.STOCK_STATUS['IN_STOCK']
+        except:
+            stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
         return stock_value
 
     @staticmethod
