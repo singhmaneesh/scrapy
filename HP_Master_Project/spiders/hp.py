@@ -175,18 +175,10 @@ class HpSpider(BaseProductsSpider):
         url = 'https://store.hp.com/us/en/HPServices?langId={}&storeId={}&catalogId={}&action=pis&catentryId={}&modelId='
         return url.format(lang_id, store_id, catalog_id, catentry_id)
 
-
     def _parse_stock_status(self, response):
         data = json.loads(response.text)
-        # stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
-        # STOCK_STATUS = {
-        #     'OTHER': -2,
-        #     'OUT_OF_STOCK': -1,
-        #     'CALL_FOR_AVAILABILITY': 0,
-        #     'IN_STOCK': 1,
-        # }
         try:
-            if data['inventoryData'][0]['noStock']:
+            if data['priceData'][0]['price'] == '0.00':
                 stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
             else:
                 stock_value = self.STOCK_STATUS['IN_STOCK']
@@ -195,36 +187,6 @@ class HpSpider(BaseProductsSpider):
         product = response.meta['product']
         product['productstockstatus'] = stock_value
         yield product
-        # stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
-        # try:
-        #     stock_message = response.xpath('//*[@itemprop="availability"]/@href')[0].extract()
-        #     if 'instock' in stock_message.lower():
-        #         stock_value = self.STOCK_STATUS['IN_STOCK']
-        #     elif 'outofstock' in stock_message.lower():
-        #         stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-        #     elif 'discontinued' in stock_message.lower():
-        #         stock_value = self.STOCK_STATUS['OTHER']
-        # except BaseException as e:
-        #     self.log("Error parsing stock status data: {}".format(e), WARNING)
-        # return stock_value
-
-    def parse_stock(self, response):
-        data = json.loads(response.text)
-        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
-        STOCK_STATUS = {
-            'OTHER': -2,
-            'OUT_OF_STOCK': -1,
-            'CALL_FOR_AVAILABILITY': 0,
-            'IN_STOCK': 1,
-        }
-        try:
-            if data['inventoryData'][0]['noStock']:
-                stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-            else:
-                stock_value = self.STOCK_STATUS['IN_STOCK']
-        except:
-            stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
-        return stock_value
 
     @staticmethod
     def _parse_categories(response):
