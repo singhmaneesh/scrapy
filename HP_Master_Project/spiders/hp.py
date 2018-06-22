@@ -178,10 +178,13 @@ class HpSpider(BaseProductsSpider):
     def _parse_stock_status(self, response):
         data = json.loads(response.text)
         try:
-            if data['priceData'][0]['price'] == '0.00':
+            if 'stock' in data['inventoryData'][0] and data['inventoryData'][0]['stock'] == 0:
                 stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
             else:
-                stock_value = self.STOCK_STATUS['IN_STOCK']
+                if data['priceData'][0]['price'] == '0.00':
+                    stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+                else:
+                    stock_value = self.STOCK_STATUS['IN_STOCK']
         except:
             stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
         product = response.meta['product']
