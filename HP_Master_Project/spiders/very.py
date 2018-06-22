@@ -142,7 +142,7 @@ class VerySpider(BaseProductsSpider):
             stock_status = stock_status[0]
             if stock_status == 'In Stock':
                 stock_value = self.STOCK_STATUS['IN_STOCK']
-            elif stock_status == 'Out Of Stock':
+            elif stock_status == 'Out of Stock':
                 stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
 
         return stock_value
