@@ -12,7 +12,8 @@ from scrapy import Request
 from scrapy.log import WARNING
 
 from HP_Master_Project.items import ProductItem
-from HP_Master_Project.spiders import BaseProductsSpider
+from HP_Master_Project.spiders import BaseProductsSpider, cond_set, \
+    cond_set_value
 from HP_Master_Project.utils import clean_text
 
 
@@ -149,6 +150,10 @@ class StaplesSpider(BaseProductsSpider):
         # Parse in_store
         in_store = self._parse_instore(response)
         product['instore'] = in_store
+        
+        # Parse stock status
+        oos = self._parse_product_stock_status(response)
+        cond_set_value(product, 'productstockstatus', oos)
 
         # Parse ship to store
         # ship_to_store = self._parse_shiptostore(response)
@@ -168,6 +173,37 @@ class StaplesSpider(BaseProductsSpider):
         price = self._parse_price(response)
         product['price'] = price
         return product
+    
+    def _parse_product_stock_status(self, response):
+        product = response.meta['product']
+        stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
+
+        try:
+            
+            stock_message = response.xpath('//div[contains(@class,"price")]//div[contains(@class,"out-of-stock")]/text()').extract()
+            if stock_message:
+                stock_message = stock_message[0]
+                if 'out of stock' in stock_message.lower():
+                    stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+                    
+                product['productstockstatus'] = stock_value
+                return product                
+                
+            stock_message = response.xpath('//meta[@itemprop="availability"]/@content').extract()
+            if stock_message:
+                stock_message = stock_message[0]
+                if 'instock' in stock_message.lower():
+                    stock_value = self.STOCK_STATUS['IN_STOCK']
+                elif 'outofstock' in stock_message.lower():
+                    stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+
+                product['productstockstatus'] = stock_value
+                return product
+
+        except BaseException as e:
+            self.log("Error parsing stock status data: {}".format(e), WARNING)
+            product['productstockstatus'] = stock_value
+            return product
 
     @staticmethod
     def _parse_name(response):
