@@ -126,6 +126,16 @@ class OfficedepotProductsSpider(BaseProductsSpider):
         stock_value = self.STOCK_STATUS['CALL_FOR_AVAILABILITY']
 
         try:
+            
+            stock_message = response.xpath('//div[contains(@class,"discontinued")]//div[contains(@class,"no_longer_avail")]/text()').extract()
+            if stock_message:
+                stock_message = stock_message[0]
+                if 'no longer available' in stock_message.lower():
+                    stock_value = self.STOCK_STATUS['OUT_OF_STOCK']
+                    
+                product['productstockstatus'] = stock_value
+                return product                
+                
             stock_message = response.xpath('//meta[@itemprop="availability"]/@content').extract()
             if stock_message:
                 stock_message = stock_message[0]
